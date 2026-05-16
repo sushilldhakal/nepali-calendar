@@ -2,6 +2,8 @@
 
 Open-source **Bikram Sambat** calendar for JavaScript and React. Free to use, MIT licensed.
 
+**[Live Demo →](https://sushilldhakal.github.io/nepali-calendar/)**
+
 | Package | npm | Description |
 |---------|-----|-------------|
 | [`bikram-sambat`](./packages/bikram-sambat) | [![npm](https://img.shields.io/npm/v/bikram-sambat)](https://www.npmjs.com/package/bikram-sambat) | AD ↔ BS conversion (zero dependencies) |
@@ -23,6 +25,10 @@ import { NepaliCalendar } from "react-nepali-calendar"
 Works with **shadcn/ui** out of the box — the calendar's CSS variables map directly to shadcn's design tokens.
 
 ## Demo
+
+**Online:** https://sushilldhakal.github.io/nepali-calendar/
+
+**Run locally:**
 
 ```bash
 git clone https://github.com/sushilldhakal/nepali-calendar.git

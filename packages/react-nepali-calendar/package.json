@@ -1,5 +1,5 @@
 {
-  "name": "@sushilldhakal/react-nepali-calendar",
+  "name": "@sushill/react-nepali-calendar",
   "version": "1.0.0",
   "description": "Bikram Sambat calendar for React — dual BS/AD display on react-day-picker v9",
   "license": "MIT",
@@ -58,7 +58,7 @@
     "react-day-picker": "^9.0.0"
   },
   "dependencies": {
-    "@sushilldhakal/bikram-sambat": "1.0.0",
+    "@sushill/bikram-sambat": "1.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.487.0",
     "tailwind-merge": "^3.0.2"

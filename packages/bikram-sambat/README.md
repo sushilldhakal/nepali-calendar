@@ -2,6 +2,8 @@
 
 Framework-agnostic Bikram Sambat (Nepali calendar) ↔ Gregorian `Date` conversion.
 
+> Part of the [nepali-calendar](https://github.com/sushilldhakal/nepali-calendar) project — see the **[Live Demo](https://sushilldhakal.github.io/nepali-calendar/)** for a full React calendar built on top of this package.
+
 ## Install
 
 ```bash

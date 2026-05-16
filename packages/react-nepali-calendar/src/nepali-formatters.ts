@@ -5,7 +5,7 @@ import {
   formatBSDate,
   formatBSMonthYear,
   getBSMonthADRange,
-} from "@sushilldhakal/bikram-sambat"
+} from "@sushill/bikram-sambat"
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const
 const WEEKDAY_ARIA_LABELS = [

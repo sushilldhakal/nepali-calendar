@@ -2,6 +2,8 @@
 
 Bikram Sambat (Nepali) calendar for React — dual BS/AD day display on [react-day-picker](https://react-day-picker.js.org/) v9.
 
+**[Live Demo →](https://sushilldhakal.github.io/nepali-calendar/)**
+
 Values in and out are always JavaScript `Date` (Gregorian). The grid navigates and labels months in Bikram Sambat.
 
 ## Install

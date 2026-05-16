@@ -17,4 +17,4 @@ export {
   getBSMonthLength,
   getBSPayPeriodLabel,
   type BikramSambatDate,
-} from "@sushilldhakal/bikram-sambat"
+} from "@sushill/bikram-sambat"
