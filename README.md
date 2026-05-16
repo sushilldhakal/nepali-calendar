@@ -25,7 +25,7 @@ Works with **shadcn/ui** out of the box — the calendar's CSS variables map dir
 ## Demo
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/nepali-calendar.git
+git clone https://github.com/sushilldhakal/nepali-calendar.git
 cd nepali-calendar
 npm install
 npm run build
