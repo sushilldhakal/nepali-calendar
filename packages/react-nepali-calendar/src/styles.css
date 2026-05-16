@@ -1,0 +1,382 @@
+/**
+ * react-nepali-calendar — default theme
+ *
+ * Designed to match shadcn/ui's Calendar component out of the box.
+ * Override the --nc-* variables to match your design system.
+ *
+ * shadcn/ui (Tailwind v4) bridge — add this to your app CSS:
+ *
+ *   .nc-root {
+ *     --nc-primary:            var(--color-primary);
+ *     --nc-primary-foreground: var(--color-primary-foreground);
+ *     --nc-accent:             var(--color-accent);
+ *     --nc-accent-foreground:  var(--color-accent-foreground);
+ *     --nc-muted-foreground:   var(--color-muted-foreground);
+ *     --nc-border:             var(--color-border);
+ *     --nc-ring:               var(--color-ring);
+ *     --nc-background:         var(--color-card);
+ *     --nc-foreground:         var(--color-card-foreground);
+ *   }
+ */
+
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+.nc-root {
+  --nc-background:         #ffffff;
+  --nc-foreground:         #0a0a0a;
+  --nc-primary:            #171717;
+  --nc-primary-foreground: #fafafa;
+  --nc-accent:             #f5f5f5;
+  --nc-accent-foreground:  #171717;
+  --nc-muted-foreground:   #737373;
+  --nc-border:             #e5e5e5;
+  --nc-ring:               #a3a3a3;
+  --nc-radius:             0.375rem;
+  --nc-cell:               2.25rem;
+}
+
+/* ── Root ──────────────────────────────────────────────────────────────────── */
+.nc-root {
+  display: inline-block;
+  padding: 0.75rem;
+  color: var(--nc-foreground);
+  background: var(--nc-background);
+  font-size: 0.875rem;
+}
+
+/* ── Month layout ──────────────────────────────────────────────────────────── */
+.nc-months {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .nc-months { flex-direction: row; }
+}
+
+.nc-month {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* ── Caption / header ──────────────────────────────────────────────────────── */
+.nc-month-caption {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 0.25rem;
+  position: relative;
+  height: 1.75rem;
+}
+
+.nc-caption-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  /* no z-index here — dropdown root manages its own stacking */
+}
+
+/* ── Navigation ────────────────────────────────────────────────────────────── */
+.nc-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  /* must not intercept clicks on the caption label between the two buttons */
+  pointer-events: none;
+}
+
+.nc-button-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* explicit size so the full button area is clickable */
+  width: 1.75rem;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  color: var(--nc-foreground);
+  /* re-enable pointer events (parent nav has none) */
+  pointer-events: auto;
+}
+
+.nc-button-nav:hover  { opacity: 1; }
+
+.nc-button-nav:focus-visible {
+  outline: 2px solid var(--nc-ring);
+  outline-offset: 2px;
+}
+
+/* SVG chevron inside the button — must not block the button's own click area */
+.nc-button-nav .nc-chevron-icon,
+.nc-chevron-icon {
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* ── Dropdowns (month/year caption layout) ─────────────────────────────────── */
+.nc-dropdowns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/*
+ * DOM structure rendered by react-day-picker Dropdown component:
+ *
+ * <span class="nc-dropdown-root">          ← position: relative container
+ *   <select class="nc-dropdown">           ← invisible, covers entire root (z-index: 1)
+ *   <span class="nc-caption-label" aria-hidden="true">  ← visible label (pointer-events: none)
+ *     Month Name
+ *     <svg class="nc-chevron-icon">
+ */
+.nc-dropdown-root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 1.75rem;
+  padding-inline: 0.5rem;
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+  background: var(--nc-background);
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--nc-foreground);
+}
+
+.nc-dropdown-root:hover { background: var(--nc-accent); }
+
+/* The native <select> — invisible but fully covers the root and is clickable */
+.nc-dropdown {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+  /* ensure it's on top and receives pointer events */
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-size: inherit;
+}
+
+/* The visible label span (aria-hidden) — sits behind the select */
+.nc-dropdown-root > span[aria-hidden] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+.nc-months-dropdown,
+.nc-years-dropdown { width: 100%; }
+
+/* ── Grid ──────────────────────────────────────────────────────────────────── */
+.nc-month-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nc-weeks {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* ── Weekday headers ───────────────────────────────────────────────────────── */
+.nc-weekdays { display: flex; }
+
+.nc-weekday {
+  width: var(--nc-cell);
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--nc-muted-foreground);
+  border-radius: var(--nc-radius);
+}
+
+/* ── Week rows ─────────────────────────────────────────────────────────────── */
+.nc-week {
+  display: flex;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* ── Day cell <td> ─────────────────────────────────────────────────────────── */
+.nc-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--nc-cell);
+  height: var(--nc-cell);
+  padding: 0;
+  text-align: center;
+  font-weight: 400;
+  position: relative;
+  border-radius: var(--nc-radius);
+}
+
+/* ── Day button <button> ───────────────────────────────────────────────────── */
+.nc-day-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--nc-cell);
+  height: var(--nc-cell);
+  padding: 0;
+  border: none;
+  border-radius: var(--nc-radius);
+  background: transparent;
+  color: var(--nc-foreground);
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.nc-day-button:hover {
+  background: var(--nc-accent);
+  color: var(--nc-accent-foreground);
+}
+
+.nc-day-button:focus-visible {
+  outline: 2px solid var(--nc-ring);
+  outline-offset: 2px;
+}
+
+/* ── TODAY ─────────────────────────────────────────────────────────────────── */
+.nc-day.rdp-today > .nc-day-button {
+  background: var(--nc-accent);
+  color: var(--nc-accent-foreground);
+  font-weight: 600;
+}
+
+/* ── SELECTED (single) ─────────────────────────────────────────────────────── */
+.nc-day.rdp-selected > .nc-day-button {
+  background: var(--nc-primary) !important;
+  color: var(--nc-primary-foreground) !important;
+}
+
+.nc-day.rdp-selected > .nc-day-button:hover {
+  background: var(--nc-primary) !important;
+  color: var(--nc-primary-foreground) !important;
+}
+
+/* ── RANGE MIDDLE ──────────────────────────────────────────────────────────── */
+.nc-day.rdp-range_middle {
+  background: var(--nc-accent);
+  border-radius: 0;
+}
+
+.nc-day.rdp-range_middle > .nc-day-button {
+  background: transparent !important;
+  color: var(--nc-accent-foreground) !important;
+  border-radius: 0;
+}
+
+.nc-day.rdp-range_middle > .nc-day-button:hover {
+  background: color-mix(in srgb, var(--nc-accent) 80%, transparent) !important;
+}
+
+/* ── RANGE START ───────────────────────────────────────────────────────────── */
+.nc-day.rdp-range_start {
+  background: var(--nc-accent);
+  border-radius: var(--nc-radius) 0 0 var(--nc-radius);
+}
+
+.nc-day.rdp-range_start > .nc-day-button {
+  background: var(--nc-primary) !important;
+  color: var(--nc-primary-foreground) !important;
+  border-radius: var(--nc-radius);
+}
+
+/* ── RANGE END ─────────────────────────────────────────────────────────────── */
+.nc-day.rdp-range_end {
+  background: var(--nc-accent);
+  border-radius: 0 var(--nc-radius) var(--nc-radius) 0;
+}
+
+.nc-day.rdp-range_end > .nc-day-button {
+  background: var(--nc-primary) !important;
+  color: var(--nc-primary-foreground) !important;
+  border-radius: var(--nc-radius);
+}
+
+/* When start and end are the same day */
+.nc-day.rdp-range_start.rdp-range_end {
+  border-radius: var(--nc-radius);
+}
+
+/* ── OUTSIDE days ──────────────────────────────────────────────────────────── */
+.nc-day.rdp-outside > .nc-day-button {
+  color: var(--nc-muted-foreground);
+  opacity: 0.5;
+}
+
+.nc-day.rdp-outside.rdp-range_middle {
+  background: color-mix(in srgb, var(--nc-accent) 50%, transparent);
+}
+
+/* ── DISABLED ──────────────────────────────────────────────────────────────── */
+.nc-day.rdp-disabled > .nc-day-button {
+  color: var(--nc-muted-foreground);
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* ── HIDDEN ────────────────────────────────────────────────────────────────── */
+.nc-day.rdp-hidden { visibility: hidden; }
+
+/* ── NepaliCalendar BS overrides (wider cells for dual BS/AD display) ──────── */
+.nc-day--bs {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.nc-day-button--bs {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.nc-weekday--bs {
+  width: 2.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.nc-week--bs { margin-top: 0.25rem; }
+
+.nc-caption-label--bs { font-weight: 600; }
+
+.nc-dropdowns--bs { gap: 0.5rem; font-weight: 600; }
+
+.nc-dropdown-root--bs {
+  height: 2rem;
+  padding-inline: 0.375rem;
+}

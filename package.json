@@ -1,0 +1,20 @@
+{
+  "name": "nepali-calendar-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Bikram Sambat calendar for React — monorepo",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspace=bikram-sambat",
+    "demo": "npm run build --workspace=bikram-sambat --workspace=react-nepali-calendar && npm run dev --workspace=demo",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
