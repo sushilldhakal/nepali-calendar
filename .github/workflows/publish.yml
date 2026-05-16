@@ -30,11 +30,11 @@ jobs:
         run: npm test
 
       - name: Publish bikram-sambat
-        run: npm publish --workspace=bikram-sambat --provenance
+        run: npm publish --workspace=packages/bikram-sambat --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish react-nepali-calendar
-        run: npm publish --workspace=react-nepali-calendar --provenance
+        run: npm publish --workspace=packages/react-nepali-calendar --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
