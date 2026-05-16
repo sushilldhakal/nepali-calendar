@@ -1,5 +1,5 @@
 import type { DayButtonProps } from "react-day-picker"
-import { adToBS } from "bikram-sambat"
+import { adToBS } from "@sushilldhakal/bikram-sambat"
 import { cn } from "./cn"
 
 export type DualDateDayButtonProps = DayButtonProps & {

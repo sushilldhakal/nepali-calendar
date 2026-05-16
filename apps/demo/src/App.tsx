@@ -2,7 +2,7 @@ import { useState } from "react"
 import { format, subDays } from "date-fns"
 import { CalendarIcon, GitFork, Package } from "lucide-react"
 import type { DateRange } from "react-day-picker"
-import { NepaliCalendar, adToBS, formatBSDate } from "react-nepali-calendar"
+import { NepaliCalendar, adToBS, formatBSDate } from "@sushilldhakal/react-nepali-calendar"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -379,7 +379,7 @@ export function App() {
           <section id="usage" className="mb-10 space-y-4">
             <h2 className="text-xl font-semibold tracking-tight border-b pb-2">Usage</h2>
             <pre className="overflow-x-auto rounded-lg bg-muted p-4 text-xs leading-relaxed">
-              <code>{`import { NepaliCalendar, formatBSDate } from "react-nepali-calendar"
+              <code>{`import { NepaliCalendar, formatBSDate } from "@sushilldhakal/react-nepali-calendar"
 import "react-nepali-calendar/styles.css"
 
 // The CSS variables map directly to shadcn/ui tokens — no extra config needed.
@@ -400,7 +400,7 @@ import "react-nepali-calendar/styles.css"
                 description="A standalone Bikram Sambat calendar. Use it directly when you don't need a popover trigger."
                 preview={<CalendarDemo />}
                 code={`import { useState } from "react"
-import { NepaliCalendar, formatBSDate } from "react-nepali-calendar"
+import { NepaliCalendar, formatBSDate } from "@sushilldhakal/react-nepali-calendar"
 
 export function CalendarDemo() {
   const [date, setDate] = useState<Date | undefined>(new Date())
@@ -425,7 +425,7 @@ export function CalendarDemo() {
                 preview={<DatePickerDemo />}
                 code={`import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
-import { NepaliCalendar, formatBSDate } from "react-nepali-calendar"
+import { NepaliCalendar, formatBSDate } from "@sushilldhakal/react-nepali-calendar"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -465,7 +465,7 @@ export function DatePickerDemo() {
                 code={`import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
 import type { DateRange } from "react-day-picker"
-import { NepaliCalendar, formatBSDate } from "react-nepali-calendar"
+import { NepaliCalendar, formatBSDate } from "@sushilldhakal/react-nepali-calendar"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
@@ -507,7 +507,7 @@ export function DateRangePickerDemo() {
                 preview={<DatePickerWithPresets />}
                 code={`import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
-import { NepaliCalendar, formatBSDate } from "react-nepali-calendar"
+import { NepaliCalendar, formatBSDate } from "@sushilldhakal/react-nepali-calendar"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -551,7 +551,7 @@ export function DatePickerWithPresets() {
                 preview={<DateOfBirthPicker />}
                 code={`import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
-import { NepaliCalendar, adToBS } from "react-nepali-calendar"
+import { NepaliCalendar, adToBS } from "@sushilldhakal/react-nepali-calendar"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"

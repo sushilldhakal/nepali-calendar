@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "react-day-picker/style.css";
-@import "react-nepali-calendar/styles.css";
+@import "@sushilldhakal/react-nepali-calendar/styles.css";
 
 /* ── Tailwind v4 theme tokens (shadcn/ui "neutral" palette) ── */
 @theme {

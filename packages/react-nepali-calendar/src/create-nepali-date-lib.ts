@@ -4,7 +4,7 @@ import {
   bsToAD,
   formatBSDate,
   getBSMonthLength,
-} from "bikram-sambat"
+} from "@sushilldhakal/bikram-sambat"
 
 function bsMonthIndex(date: Date) {
   const bs = adToBS(date)
