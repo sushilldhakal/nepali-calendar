@@ -609,14 +609,27 @@ function eachDateInRange(startDate: string, endDate: string) {
   return dates
 }
 
+function formatBSDateKeyFromAD(date: Date) {
+  const bs = adToBS(date)
+  const month = String(bs.month).padStart(2, "0")
+  const day = String(bs.day).padStart(2, "0")
+
+  return `${bs.year}-${month}-${day}`
+}
+
 function getHolidayName(holiday: Holiday) {
   return holiday.name_en || holiday.name_ne || holiday.id
 }
 
 function formatHolidayDateRange(holiday: Holiday) {
-  if (holiday.start_date === holiday.end_date) return holiday.start_date
+  const startBS = formatBSDateKeyFromAD(dateFromISODate(holiday.start_date))
+  const endBS = formatBSDateKeyFromAD(dateFromISODate(holiday.end_date))
 
-  return `${holiday.start_date} - ${holiday.end_date}`
+  if (holiday.start_date === holiday.end_date) {
+    return `BS ${startBS} (AD ${holiday.start_date})`
+  }
+
+  return `BS ${startBS} - ${endBS} (AD ${holiday.start_date} - ${holiday.end_date})`
 }
 
 function formatHolidayMeta(holiday: Holiday) {
@@ -723,7 +736,7 @@ function HolidaysCalendarDemo() {
     const dates = new Set<string>()
     for (const holiday of holidaysData?.holidays ?? []) {
       for (const date of eachDateInRange(holiday.start_date, holiday.end_date)) {
-        dates.add(formatLocalISODate(date))
+        dates.add(formatBSDateKeyFromAD(date))
       }
     }
     return dates
@@ -745,7 +758,7 @@ function HolidaysCalendarDemo() {
     const groups = new Map<string, Holiday[]>()
     for (const holiday of holidaysData?.holidays ?? []) {
       for (const date of eachDateInRange(holiday.start_date, holiday.end_date)) {
-        const key = formatLocalISODate(date)
+        const key = formatBSDateKeyFromAD(date)
         groups.set(key, [...(groups.get(key) ?? []), holiday])
       }
     }
@@ -754,7 +767,7 @@ function HolidaysCalendarDemo() {
 
   const visibleBS = adToBS(visibleMonth)
   const selectedHolidays = selectedDate
-    ? holidaysByDate.get(formatLocalISODate(selectedDate)) ?? []
+    ? holidaysByDate.get(formatBSDateKeyFromAD(selectedDate)) ?? []
     : []
   const visibleMonthHolidays = holidaysByMonth.get(visibleBS.month) ?? []
   const startMonth = bsToAD(HOLIDAYS_DEFAULT_YEAR, 1, 1)
@@ -766,7 +779,7 @@ function HolidaysCalendarDemo() {
 
   const modifiers = useMemo(
     () => ({
-      holiday: (date: Date) => holidayDates.has(formatLocalISODate(date)),
+      holiday: (date: Date) => holidayDates.has(formatBSDateKeyFromAD(date)),
       holidaysLoading: (date: Date) => {
         const bs = adToBS(date)
         return isLoading && bs.year === HOLIDAYS_DEFAULT_YEAR
@@ -1207,7 +1220,7 @@ export function HolidaysCalendar() {
     const dates = new Set<string>()
     for (const holiday of holidays) {
       for (const date of eachDateInRange(holiday.start_date, holiday.end_date)) {
-        dates.add(formatLocalISODate(date))
+        dates.add(formatBSDateKey(date))
       }
     }
     return dates
@@ -1221,7 +1234,7 @@ export function HolidaysCalendar() {
         mode="single"
         month={visibleMonth}
         onMonthChange={setVisibleMonth}
-        modifiers={{ holiday: (date) => holidayDates.has(formatLocalISODate(date)) }}
+        modifiers={{ holiday: (date) => holidayDates.has(formatBSDateKey(date)) }}
         modifiersClassNames={{ holiday: "patro-holiday-day" }}
       />
       <MonthlyHolidayList
