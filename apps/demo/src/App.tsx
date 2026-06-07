@@ -1,13 +1,13 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { format, subDays } from "date-fns"
-import { CalendarIcon, GitFork, Package } from "lucide-react"
+import { AlertCircle, CalendarIcon, GitFork, Package } from "lucide-react"
 import type { DateRange } from "react-day-picker"
-import { NepaliCalendar, adToBS, formatBSDate } from "@sushill/react-nepali-calendar"
+import { NepaliCalendar, adToBS, bsToAD, formatBSDate } from "@sushill/react-nepali-calendar"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Select,
@@ -16,7 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  formatFestivalMeta,
+  formatFestivalName,
+  formatLocalISODate,
+  getDailyPanchanga,
+  getPatroMonth,
+  PATRO_API_URL,
+  warmPatroApi,
+  type DailyPanchanga,
+  type PatroMonth,
+} from "@/patro-api"
 
 // ─── Date Picker: Basic ──────────────────────────────────────────────────────
 
@@ -216,6 +228,350 @@ function CalendarDemo() {
   )
 }
 
+// ─── Calendar: Dynamic Patro API integration ─────────────────────────────────
+
+const DYNAMIC_PATRO_DEFAULT_MONTH = bsToAD(2083, 2, 1)
+
+function getDynamicPatroDefaultMonth() {
+  return new Date(DYNAMIC_PATRO_DEFAULT_MONTH)
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unable to load Patro data."
+}
+
+function formatPanchangaElement(element: DailyPanchanga["tithi"]) {
+  if (!element) return undefined
+
+  const name = element?.name_ne ?? element?.name
+  if (!name) return undefined
+
+  const endTime = element.end_hours_clock ?? element.end_ghati_clock
+  return endTime ? `${name} (until ${endTime})` : name
+}
+
+function formatNextElement(element: DailyPanchanga["tithi"]) {
+  if (!element) return undefined
+
+  const name = element?.next?.name_ne ?? element?.next?.name
+  if (!name) return undefined
+
+  const endTime = element.next?.end_hours_clock ?? element.next?.end_ghati_clock
+  return endTime ? `${name} (until ${endTime})` : name
+}
+
+function PanchangaField({ label, value }: { label: string; value?: string }) {
+  if (!value) return null
+
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-md border bg-background px-3 py-2">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="max-w-[12rem] text-right text-sm">{value}</span>
+    </div>
+  )
+}
+
+function PanchangaSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      <Skeleton className="h-5 w-2/3" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <div className="grid gap-2">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton key={index} className="h-10 w-full" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PanchangaSidebar({
+  date,
+  panchanga,
+  festivals,
+  isLoading,
+  error,
+}: {
+  date?: Date
+  panchanga: DailyPanchanga | null
+  festivals: PatroMonth["days"][number]["festivals"]
+  isLoading: boolean
+  error: string | null
+}) {
+  const festivalItems = panchanga?.festivals?.length ? panchanga.festivals : festivals ?? []
+
+  return (
+    <Card className="w-full lg:max-w-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Daily Panchanga</CardTitle>
+        <CardDescription>
+          {date ? formatLocalISODate(date) : "Select a calendar day to load details."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {!date ? (
+          <p className="text-sm text-muted-foreground">
+            Month data is loaded with <code className="rounded bg-muted px-1">panchanga=false</code>.
+            Selecting a date fetches the full daily panchanga.
+          </p>
+        ) : isLoading ? (
+          <PanchangaSkeleton />
+        ) : error ? (
+          <div className="flex gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        ) : panchanga ? (
+          <>
+            <div className="flex flex-col gap-1">
+              <p className="font-medium">{panchanga.display?.bs_ne ?? formatBSDate(date)}</p>
+              {panchanga.display?.gregorian_en && (
+                <p className="text-sm text-muted-foreground">{panchanga.display.gregorian_en}</p>
+              )}
+              {panchanga.display?.ns_ne && (
+                <p className="text-sm text-muted-foreground">{panchanga.display.ns_ne}</p>
+              )}
+            </div>
+
+            {festivalItems.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {festivalItems.map((festival, index) => (
+                  <Badge key={`${formatFestivalName(festival)}-${index}`} variant="secondary">
+                    {formatFestivalName(festival)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            <div className="grid gap-2">
+              <PanchangaField label="Tithi" value={formatPanchangaElement(panchanga.tithi)} />
+              <PanchangaField label="Next tithi" value={formatNextElement(panchanga.tithi)} />
+              <PanchangaField label="Nakshatra" value={formatPanchangaElement(panchanga.nakshatra)} />
+              <PanchangaField label="Yoga" value={formatPanchangaElement(panchanga.yoga)} />
+              <PanchangaField label="Karana" value={formatPanchangaElement(panchanga.karana)} />
+              <PanchangaField label="Paksha" value={panchanga.paksha?.label_ne} />
+              <PanchangaField
+                label="Sun"
+                value={[panchanga.sunrise?.local_time_short, panchanga.sunset?.local_time_short]
+                  .filter(Boolean)
+                  .join(" - ")}
+              />
+              <PanchangaField
+                label="Moon"
+                value={[panchanga.moonrise?.local_time_short, panchanga.moonset?.local_time_short]
+                  .filter(Boolean)
+                  .join(" - ")}
+              />
+              <PanchangaField
+                label="Dinamaan"
+                value={panchanga.dinamaan?.label_ne ?? panchanga.dinamaan?.label_en}
+              />
+              <PanchangaField
+                label="Rashi"
+                value={panchanga.chandra_rashi?.name_ne ?? panchanga.chandra_rashi?.name}
+              />
+              <PanchangaField
+                label="Ritu"
+                value={panchanga.ritu?.name_ne ?? panchanga.ritu?.season}
+              />
+            </div>
+
+            {festivalItems.some((festival) => formatFestivalMeta(festival)) && (
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                {festivalItems.map((festival, index) => {
+                  const meta = formatFestivalMeta(festival)
+                  if (!meta) return null
+
+                  return (
+                    <span key={`${formatFestivalName(festival)}-meta-${index}`}>
+                      {formatFestivalName(festival)}: {meta}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
+  )
+}
+
+function DynamicPatroDemo() {
+  const [visibleMonth, setVisibleMonth] = useState<Date>(getDynamicPatroDefaultMonth)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(getDynamicPatroDefaultMonth)
+  const [monthData, setMonthData] = useState<PatroMonth | null>(null)
+  const [monthLoading, setMonthLoading] = useState(false)
+  const [monthError, setMonthError] = useState<string | null>(null)
+  const [dailyPanchanga, setDailyPanchanga] = useState<DailyPanchanga | null>(null)
+  const [dailyLoading, setDailyLoading] = useState(false)
+  const [dailyError, setDailyError] = useState<string | null>(null)
+
+  const visibleBS = useMemo(() => adToBS(visibleMonth), [visibleMonth])
+  const activeMonthData =
+    monthData?.bs_year === visibleBS.year && monthData.bs_month === visibleBS.month ? monthData : null
+
+  useEffect(() => {
+    let cancelled = false
+
+    setMonthLoading(true)
+    setMonthError(null)
+
+    getPatroMonth(visibleBS.year, visibleBS.month)
+      .then((data) => {
+        if (cancelled) return
+
+        setMonthData(data)
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+
+        setMonthError(getErrorMessage(error))
+      })
+      .finally(() => {
+        if (!cancelled) setMonthLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [visibleBS.month, visibleBS.year])
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!selectedDate) {
+      setDailyPanchanga(null)
+      setDailyError(null)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setDailyLoading(true)
+    setDailyError(null)
+
+    getDailyPanchanga(selectedDate)
+      .then((data) => {
+        if (cancelled) return
+
+        setDailyPanchanga(data)
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+
+        setDailyError(getErrorMessage(error))
+      })
+      .finally(() => {
+        if (!cancelled) setDailyLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDate])
+
+  const festivalsByDate = useMemo(() => {
+    const map = new Map<string, PatroMonth["days"][number]>()
+    for (const day of activeMonthData?.days ?? []) {
+      if (day.festivals?.length) map.set(day.date, day)
+    }
+    return map
+  }, [activeMonthData])
+
+  const selectedDay = selectedDate ? festivalsByDate.get(formatLocalISODate(selectedDate)) : undefined
+  const festivalCount = Array.from(festivalsByDate.values()).reduce(
+    (count, day) => count + (day.festivals?.length ?? 0),
+    0,
+  )
+
+  const modifiers = useMemo(
+    () => ({
+      festival: (date: Date) => festivalsByDate.has(formatLocalISODate(date)),
+      monthLoading: (date: Date) => {
+        const bs = adToBS(date)
+        return monthLoading && bs.year === visibleBS.year && bs.month === visibleBS.month
+      },
+    }),
+    [festivalsByDate, monthLoading, visibleBS.month, visibleBS.year],
+  )
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <CardTitle>Dynamic Patro</CardTitle>
+            <CardDescription>
+              Fetches month festivals from <code className="rounded bg-muted px-1">/patro</code> and
+              daily panchanga from <code className="rounded bg-muted px-1">/panchanga</code>.
+            </CardDescription>
+          </div>
+          <Badge variant="outline" className="w-fit">
+            API: {new URL(PATRO_API_URL).host}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <div>
+              <p className="font-medium">
+                {activeMonthData?.bs_month_name ?? visibleBS.monthName} {visibleBS.year}
+              </p>
+              <p className="text-muted-foreground">
+                {activeMonthData
+                  ? `${activeMonthData.month_length} days · ${festivalCount} festival marker${
+                      festivalCount === 1 ? "" : "s"
+                    }`
+                  : "Loading month markers..."}
+              </p>
+            </div>
+            {monthLoading && <Badge variant="secondary">Loading month</Badge>}
+          </div>
+
+          <NepaliCalendar
+            mode="single"
+            month={visibleMonth}
+            onMonthChange={setVisibleMonth}
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            modifiers={modifiers}
+            modifiersClassNames={{
+              festival: "patro-festival-day",
+              monthLoading: "patro-loading-day",
+            }}
+            className="rounded-lg border"
+          />
+
+          {monthError ? (
+            <div className="flex max-w-md gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                {monthError} Render may be waking the service; try the month again in a moment.
+              </span>
+            </div>
+          ) : (
+            <p className="max-w-md text-xs text-muted-foreground">
+              Festival days are highlighted with a dot. Month fetches are cached in-memory so
+              revisiting a BS month is instant during the session.
+            </p>
+          )}
+        </div>
+
+        <PanchangaSidebar
+          date={selectedDate}
+          panchanga={dailyPanchanga}
+          festivals={selectedDay?.festivals}
+          isLoading={dailyLoading}
+          error={dailyError}
+        />
+      </CardContent>
+    </Card>
+  )
+}
+
 // ─── Demo block (preview + code tabs) ───────────────────────────────────────
 
 function DemoBlock({
@@ -270,6 +626,7 @@ const NAV = [
   { label: "Usage" },
   { label: "Examples", active: true },
   { label: "Calendar" },
+  { label: "Dynamic Patro" },
   { label: "Basic" },
   { label: "Date Range" },
   { label: "With Presets" },
@@ -281,6 +638,10 @@ const NAV = [
 export function App() {
   const today = new Date()
   const todayBS = adToBS(today)
+
+  useEffect(() => {
+    void warmPatroApi()
+  }, [])
 
   return (
     <div className="min-h-screen bg-background font-sans antialiased">
@@ -332,7 +693,7 @@ export function App() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 px-6 py-10 max-w-3xl">
+        <main className="flex-1 min-w-0 px-6 py-10 max-w-5xl">
           {/* Page title */}
           <div className="space-y-2 mb-8">
             <h1 className="text-3xl font-bold tracking-tight">Nepali Date Picker</h1>
@@ -411,6 +772,52 @@ export function CalendarDemo() {
       selected={date}
       onSelect={setDate}
       className="rounded-lg border"
+    />
+  )
+}`}
+              />
+            </div>
+
+            {/* Dynamic Patro */}
+            <div id="dynamic-patro">
+              <DemoBlock
+                title="Dynamic Patro"
+                description="Hydrate the calendar from the Surya Panchanga API: lightweight month markers first, full daily panchanga on selection."
+                preview={<DynamicPatroDemo />}
+                code={`import { useEffect, useMemo, useState } from "react"
+import { NepaliCalendar, adToBS } from "@sushill/react-nepali-calendar"
+
+export function DynamicPatro() {
+  const [visibleMonth, setVisibleMonth] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>()
+  const [monthData, setMonthData] = useState(null)
+  const visibleBS = useMemo(() => adToBS(visibleMonth), [visibleMonth])
+
+  useEffect(() => {
+    fetch("https://patro.onrender.com/health").catch(() => undefined)
+  }, [])
+
+  useEffect(() => {
+    fetch(
+      \`https://patro.onrender.com/patro/\${visibleBS.year}/\${visibleBS.month}?panchanga=false\`,
+    )
+      .then((response) => response.json())
+      .then(setMonthData)
+  }, [visibleBS.month, visibleBS.year])
+
+  const modifiers = {
+    festival: (date: Date) => hasFestival(date, monthData),
+  }
+
+  return (
+    <NepaliCalendar
+      mode="single"
+      month={visibleMonth}
+      onMonthChange={setVisibleMonth}
+      selected={selectedDate}
+      onSelect={setSelectedDate}
+      modifiers={modifiers}
+      modifiersClassNames={{ festival: "patro-festival-day" }}
     />
   )
 }`}

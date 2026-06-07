@@ -99,3 +99,28 @@
   --nc-border:             var(--color-border);
   --nc-ring:               var(--color-ring);
 }
+
+/* Dynamic Patro demo markers */
+.patro-festival-day > .nc-day-button {
+  position: relative;
+}
+
+.patro-festival-day > .nc-day-button::after {
+  content: "";
+  position: absolute;
+  bottom: 0.25rem;
+  left: 50%;
+  width: 0.25rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background: var(--color-destructive);
+  transform: translateX(-50%);
+}
+
+.patro-festival-day.rdp-selected > .nc-day-button::after {
+  background: currentColor;
+}
+
+.patro-loading-day > .nc-day-button {
+  opacity: 0.65;
+}
