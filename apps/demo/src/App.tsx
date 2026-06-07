@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from "react"
 import { format, subDays } from "date-fns"
 import { AlertCircle, CalendarIcon, GitFork, Package } from "lucide-react"
 import type { DateRange } from "react-day-picker"
-import { NepaliCalendar, adToBS, bsToAD, formatBSDate } from "@sushill/react-nepali-calendar"
+import {
+  BS_MONTH_NAMES,
+  NepaliCalendar,
+  adToBS,
+  bsToAD,
+  formatBSDate,
+  getBSMonthLength,
+} from "@sushill/react-nepali-calendar"
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -23,10 +30,13 @@ import {
   formatFestivalName,
   formatLocalISODate,
   getDailyPanchanga,
+  getHolidaysYear,
   getPatroMonth,
   PATRO_API_URL,
   warmPatroApi,
   type DailyPanchanga,
+  type Holiday,
+  type HolidaysYear,
   type PatroMonth,
 } from "@/patro-api"
 
@@ -572,6 +582,355 @@ function DynamicPatroDemo() {
   )
 }
 
+// ─── Calendar: Holidays endpoint integration ─────────────────────────────────
+
+const HOLIDAYS_DEFAULT_YEAR = 2083
+const HOLIDAYS_DEFAULT_MONTH = bsToAD(HOLIDAYS_DEFAULT_YEAR, 1, 1)
+
+function getHolidaysDefaultMonth() {
+  return new Date(HOLIDAYS_DEFAULT_MONTH)
+}
+
+function dateFromISODate(date: string) {
+  const [year = "1970", month = "1", day = "1"] = date.split("-")
+  return new Date(Number(year), Number(month) - 1, Number(day))
+}
+
+function eachDateInRange(startDate: string, endDate: string) {
+  const dates: Date[] = []
+  const cursor = dateFromISODate(startDate)
+  const end = dateFromISODate(endDate)
+
+  while (cursor <= end) {
+    dates.push(new Date(cursor))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return dates
+}
+
+function getHolidayName(holiday: Holiday) {
+  return holiday.name_en || holiday.name_ne || holiday.id
+}
+
+function formatHolidayDateRange(holiday: Holiday) {
+  if (holiday.start_date === holiday.end_date) return holiday.start_date
+
+  return `${holiday.start_date} - ${holiday.end_date}`
+}
+
+function formatHolidayMeta(holiday: Holiday) {
+  return [holiday.importance, holiday.category, holiday.type]
+    .filter(Boolean)
+    .map((value) => value[0]?.toUpperCase() + value.slice(1))
+    .join(" · ")
+}
+
+function HolidaysSkeleton() {
+  return (
+    <div className="grid gap-3">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex flex-col gap-2 rounded-lg border p-3">
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-3 w-1/2" />
+          <Skeleton className="h-3 w-full" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function HolidayListItem({ holiday }: { holiday: Holiday }) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <p className="font-medium leading-none">{getHolidayName(holiday)}</p>
+          <p className="text-xs text-muted-foreground">{formatHolidayDateRange(holiday)}</p>
+        </div>
+        <Badge variant={holiday.importance === "national" ? "secondary" : "outline"}>
+          {holiday.duration_days} day{holiday.duration_days === 1 ? "" : "s"}
+        </Badge>
+      </div>
+      <p className="text-xs text-muted-foreground">{formatHolidayMeta(holiday)}</p>
+      {holiday.notes && <p className="text-sm text-muted-foreground">{holiday.notes}</p>}
+    </div>
+  )
+}
+
+function HolidayMonthSection({
+  monthName,
+  holidays,
+}: {
+  monthName: string
+  holidays: Holiday[]
+}) {
+  return (
+    <section className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="font-semibold">{monthName}</h4>
+        <Badge variant="outline">
+          {holidays.length} holiday{holidays.length === 1 ? "" : "s"}
+        </Badge>
+      </div>
+      {holidays.length > 0 ? (
+        <div className="grid gap-2">
+          {holidays.map((holiday) => (
+            <HolidayListItem key={`${monthName}-${holiday.id}-${holiday.start_date}`} holiday={holiday} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">No major holidays in this BS month.</p>
+      )}
+    </section>
+  )
+}
+
+function HolidaysCalendarDemo() {
+  const [visibleMonth, setVisibleMonth] = useState<Date>(getHolidaysDefaultMonth)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(getHolidaysDefaultMonth)
+  const [holidaysData, setHolidaysData] = useState<HolidaysYear | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    setIsLoading(true)
+    setError(null)
+
+    getHolidaysYear(HOLIDAYS_DEFAULT_YEAR)
+      .then((data) => {
+        if (cancelled) return
+
+        setHolidaysData(data)
+      })
+      .catch((requestError: unknown) => {
+        if (cancelled) return
+
+        setError(getErrorMessage(requestError))
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const holidayDates = useMemo(() => {
+    const dates = new Set<string>()
+    for (const holiday of holidaysData?.holidays ?? []) {
+      for (const date of eachDateInRange(holiday.start_date, holiday.end_date)) {
+        dates.add(formatLocalISODate(date))
+      }
+    }
+    return dates
+  }, [holidaysData])
+
+  const holidaysByMonth = useMemo(() => {
+    const groups = new Map<number, Holiday[]>()
+    for (let month = 1; month <= 12; month += 1) groups.set(month, [])
+
+    for (const holiday of holidaysData?.holidays ?? []) {
+      const bs = adToBS(dateFromISODate(holiday.start_date))
+      groups.get(bs.month)?.push(holiday)
+    }
+
+    return groups
+  }, [holidaysData])
+
+  const holidaysByDate = useMemo(() => {
+    const groups = new Map<string, Holiday[]>()
+    for (const holiday of holidaysData?.holidays ?? []) {
+      for (const date of eachDateInRange(holiday.start_date, holiday.end_date)) {
+        const key = formatLocalISODate(date)
+        groups.set(key, [...(groups.get(key) ?? []), holiday])
+      }
+    }
+    return groups
+  }, [holidaysData])
+
+  const visibleBS = adToBS(visibleMonth)
+  const selectedHolidays = selectedDate
+    ? holidaysByDate.get(formatLocalISODate(selectedDate)) ?? []
+    : []
+  const visibleMonthHolidays = holidaysByMonth.get(visibleBS.month) ?? []
+  const startMonth = bsToAD(HOLIDAYS_DEFAULT_YEAR, 1, 1)
+  const endMonth = bsToAD(
+    HOLIDAYS_DEFAULT_YEAR,
+    12,
+    getBSMonthLength(HOLIDAYS_DEFAULT_YEAR, 12),
+  )
+
+  const modifiers = useMemo(
+    () => ({
+      holiday: (date: Date) => holidayDates.has(formatLocalISODate(date)),
+      holidaysLoading: (date: Date) => {
+        const bs = adToBS(date)
+        return isLoading && bs.year === HOLIDAYS_DEFAULT_YEAR
+      },
+    }),
+    [holidayDates, isLoading],
+  )
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <CardTitle>Holidays Calendar</CardTitle>
+            <CardDescription>
+              Highlights every date returned by{" "}
+              <code className="rounded bg-muted px-1">/holidays/{HOLIDAYS_DEFAULT_YEAR}</code> and
+              lists holidays by BS month.
+            </CardDescription>
+          </div>
+          <Badge variant="outline" className="w-fit">
+            {holidaysData?.count ?? 0} holidays · {holidaysData?.location.name ?? "Kathmandu"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6">
+        <div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)]">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <div>
+                <p className="font-medium">
+                  {visibleBS.monthName} {visibleBS.year}
+                </p>
+                <p className="text-muted-foreground">
+                  {visibleMonthHolidays.length} holiday
+                  {visibleMonthHolidays.length === 1 ? "" : "s"} in this BS month
+                </p>
+              </div>
+              {isLoading && <Badge variant="secondary">Loading holidays</Badge>}
+            </div>
+
+            <NepaliCalendar
+              mode="single"
+              month={visibleMonth}
+              onMonthChange={setVisibleMonth}
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              startMonth={startMonth}
+              endMonth={endMonth}
+              modifiers={modifiers}
+              modifiersClassNames={{
+                holiday: "patro-holiday-day",
+                holidaysLoading: "patro-loading-day",
+              }}
+              className="rounded-lg border"
+            />
+
+            {error ? (
+              <div className="flex max-w-md gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  {error} The cache-backed holidays endpoint may still be warming up.
+                </span>
+              </div>
+            ) : (
+              <p className="max-w-md text-xs text-muted-foreground">
+                Muted filled days are holidays. Multi-day festivals like Dashain are highlighted
+                across their full Gregorian date range.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <Card className="bg-muted/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  {selectedDate ? formatBSDate(selectedDate) : "Selected date"}
+                </CardTitle>
+                <CardDescription>
+                  {selectedDate ? formatLocalISODate(selectedDate) : "Pick a holiday date."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {isLoading ? (
+                  <HolidaysSkeleton />
+                ) : selectedHolidays.length > 0 ? (
+                  selectedHolidays.map((holiday) => (
+                    <HolidayListItem
+                      key={`selected-${holiday.id}-${holiday.start_date}`}
+                      holiday={holiday}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No holiday is active on this selected date.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-muted/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">{visibleBS.monthName} holidays</CardTitle>
+                <CardDescription>Quick list for the currently visible BS month.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {isLoading ? (
+                  <HolidaysSkeleton />
+                ) : visibleMonthHolidays.length > 0 ? (
+                  visibleMonthHolidays.map((holiday) => (
+                    <HolidayListItem
+                      key={`visible-${holiday.id}-${holiday.start_date}`}
+                      holiday={holiday}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No major holidays listed for this month.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h3 className="font-semibold">Monthly holiday list</h3>
+              <p className="text-sm text-muted-foreground">
+                BS {HOLIDAYS_DEFAULT_YEAR} · Gregorian {holidaysData?.gregorian_range.start ?? "-"} to{" "}
+                {holidaysData?.gregorian_range.end ?? "-"}
+              </p>
+            </div>
+            {holidaysData && (
+              <Badge variant="secondary">
+                Rule {holidaysData.rule_version} · Engine {holidaysData.engine_version}
+              </Badge>
+            )}
+          </div>
+
+          {isLoading ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-40 w-full" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {BS_MONTH_NAMES.map((monthName, index) => (
+                <HolidayMonthSection
+                  key={monthName}
+                  monthName={monthName}
+                  holidays={holidaysByMonth.get(index + 1) ?? []}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 // ─── Demo block (preview + code tabs) ───────────────────────────────────────
 
 function DemoBlock({
@@ -627,6 +986,7 @@ const NAV = [
   { label: "Examples", active: true },
   { label: "Calendar" },
   { label: "Dynamic Patro" },
+  { label: "Holidays Calendar" },
   { label: "Basic" },
   { label: "Date Range" },
   { label: "With Presets" },
@@ -819,6 +1179,56 @@ export function DynamicPatro() {
       modifiers={modifiers}
       modifiersClassNames={{ festival: "patro-festival-day" }}
     />
+  )
+}`}
+              />
+            </div>
+
+            {/* Holidays Calendar */}
+            <div id="holidays-calendar">
+              <DemoBlock
+                title="Holidays Calendar"
+                description="Fetch BS-year holidays once, fill holiday dates with a muted treatment, and list holidays by BS month below the calendar."
+                preview={<HolidaysCalendarDemo />}
+                code={`import { useEffect, useMemo, useState } from "react"
+import { NepaliCalendar, adToBS } from "@sushill/react-nepali-calendar"
+
+export function HolidaysCalendar() {
+  const [holidays, setHolidays] = useState([])
+  const [visibleMonth, setVisibleMonth] = useState(new Date())
+
+  useEffect(() => {
+    fetch("https://patro.onrender.com/holidays/2083")
+      .then((response) => response.json())
+      .then((data) => setHolidays(data.holidays))
+  }, [])
+
+  const holidayDates = useMemo(() => {
+    const dates = new Set<string>()
+    for (const holiday of holidays) {
+      for (const date of eachDateInRange(holiday.start_date, holiday.end_date)) {
+        dates.add(formatLocalISODate(date))
+      }
+    }
+    return dates
+  }, [holidays])
+
+  const holidaysByMonth = useMemo(() => groupByBSMonth(holidays), [holidays])
+
+  return (
+    <>
+      <NepaliCalendar
+        mode="single"
+        month={visibleMonth}
+        onMonthChange={setVisibleMonth}
+        modifiers={{ holiday: (date) => holidayDates.has(formatLocalISODate(date)) }}
+        modifiersClassNames={{ holiday: "patro-holiday-day" }}
+      />
+      <MonthlyHolidayList
+        month={adToBS(visibleMonth).month}
+        holidaysByMonth={holidaysByMonth}
+      />
+    </>
   )
 }`}
               />

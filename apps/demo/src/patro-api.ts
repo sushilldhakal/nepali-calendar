@@ -33,6 +33,38 @@ export type PatroMonth = {
   days: PatroMonthDay[]
 }
 
+export type Holiday = {
+  id: string
+  name_en: string
+  name_ne?: string
+  start_date: string
+  end_date: string
+  duration_days: number
+  type: string
+  category: string
+  importance: string
+  notes?: string
+}
+
+export type HolidaysYear = {
+  bs_year: number
+  gregorian_range: {
+    start: string
+    end: string
+  }
+  location: {
+    lat: number
+    lon: number
+    timezone: string
+    name: string
+  }
+  count: number
+  holidays: Holiday[]
+  rule_version: string
+  engine_version: string
+  generated_at: string
+}
+
 type NamedElement = {
   name?: string
   name_ne?: string
@@ -95,6 +127,7 @@ export type DailyPanchanga = {
 
 const monthCache = new Map<string, Promise<PatroMonth>>()
 const dayCache = new Map<string, Promise<DailyPanchanga>>()
+const holidaysCache = new Map<number, Promise<HolidaysYear>>()
 
 function fetchJson<T>(path: string): Promise<T> {
   return fetch(`${PATRO_API_URL}${path}`).then(async (response) => {
@@ -141,6 +174,18 @@ export function getDailyPanchanga(date: Date) {
     },
   )
   dayCache.set(dateKey, request)
+  return request
+}
+
+export function getHolidaysYear(bsYear: number) {
+  const cached = holidaysCache.get(bsYear)
+  if (cached) return cached
+
+  const request = fetchJson<HolidaysYear>(`/holidays/${bsYear}`).catch((error: unknown) => {
+    holidaysCache.delete(bsYear)
+    throw error
+  })
+  holidaysCache.set(bsYear, request)
   return request
 }
 
