@@ -3,7 +3,6 @@ import { format, subDays } from "date-fns"
 import { AlertCircle, CalendarIcon, GitFork, Package } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import {
-  BS_MONTH_NAMES,
   NepaliCalendar,
   adToBS,
   bsToAD,
@@ -671,34 +670,6 @@ function HolidayListItem({ holiday }: { holiday: Holiday }) {
   )
 }
 
-function HolidayMonthSection({
-  monthName,
-  holidays,
-}: {
-  monthName: string
-  holidays: Holiday[]
-}) {
-  return (
-    <section className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <h4 className="font-semibold">{monthName}</h4>
-        <Badge variant="outline">
-          {holidays.length} holiday{holidays.length === 1 ? "" : "s"}
-        </Badge>
-      </div>
-      {holidays.length > 0 ? (
-        <div className="grid gap-2">
-          {holidays.map((holiday) => (
-            <HolidayListItem key={`${monthName}-${holiday.id}-${holiday.start_date}`} holiday={holiday} />
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">No major holidays in this BS month.</p>
-      )}
-    </section>
-  )
-}
-
 function HolidaysCalendarDemo() {
   const [visibleMonth, setVisibleMonth] = useState<Date>(getHolidaysDefaultMonth)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(getHolidaysDefaultMonth)
@@ -905,40 +876,13 @@ function HolidaysCalendarDemo() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h3 className="font-semibold">Monthly holiday list</h3>
-              <p className="text-sm text-muted-foreground">
-                BS {HOLIDAYS_DEFAULT_YEAR} · Gregorian {holidaysData?.gregorian_range.start ?? "-"} to{" "}
-                {holidaysData?.gregorian_range.end ?? "-"}
-              </p>
-            </div>
-            {holidaysData && (
-              <Badge variant="secondary">
-                Rule {holidaysData.rule_version} · Engine {holidaysData.engine_version}
-              </Badge>
-            )}
-          </div>
-
-          {isLoading ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-40 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2">
-              {BS_MONTH_NAMES.map((monthName, index) => (
-                <HolidayMonthSection
-                  key={monthName}
-                  monthName={monthName}
-                  holidays={holidaysByMonth.get(index + 1) ?? []}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {holidaysData && (
+          <p className="text-xs text-muted-foreground">
+            BS {HOLIDAYS_DEFAULT_YEAR} · Gregorian {holidaysData.gregorian_range.start} to{" "}
+            {holidaysData.gregorian_range.end} · Rule {holidaysData.rule_version} · Engine{" "}
+            {holidaysData.engine_version}
+          </p>
+        )}
       </CardContent>
     </Card>
   )
@@ -1201,7 +1145,7 @@ export function DynamicPatro() {
             <div id="holidays-calendar">
               <DemoBlock
                 title="Holidays Calendar"
-                description="Fetch BS-year holidays once, fill holiday dates with a muted treatment, and list holidays by BS month below the calendar."
+                description="Fetch BS-year holidays once, fill holiday dates with a muted treatment, and show the current BS month's holidays."
                 preview={<HolidaysCalendarDemo />}
                 code={`import { useEffect, useMemo, useState } from "react"
 import { NepaliCalendar, adToBS } from "@sushill/react-nepali-calendar"
