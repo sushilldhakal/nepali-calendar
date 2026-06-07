@@ -1,3 +1,5 @@
+import { adToBS, type BikramSambatDate } from "@sushill/react-nepali-calendar"
+
 const DEFAULT_PATRO_API_URL = "https://patro.onrender.com"
 
 export const PATRO_API_URL =
@@ -125,6 +127,10 @@ export type DailyPanchanga = {
   festivals?: PatroFestival[]
 }
 
+type DailyPanchangaResponse = DailyPanchanga & {
+  detail?: DailyPanchanga
+}
+
 const monthCache = new Map<string, Promise<PatroMonth>>()
 const dayCache = new Map<string, Promise<DailyPanchanga>>()
 const holidaysCache = new Map<number, Promise<HolidaysYear>>()
@@ -163,16 +169,16 @@ export function getPatroMonth(bsYear: number, bsMonth: number) {
 }
 
 export function getDailyPanchanga(date: Date) {
-  const dateKey = formatLocalISODate(date)
+  const dateKey = formatBSPanchangaDate(date)
   const cached = dayCache.get(dateKey)
   if (cached) return cached
 
-  const request = fetchJson<DailyPanchanga>(`/panchanga/${dateKey}?era=ad&festivals=true`).catch(
-    (error: unknown) => {
+  const request = fetchJson<DailyPanchangaResponse>(`/panchanga/${dateKey}?festivals=true`)
+    .then(normalizeDailyPanchanga)
+    .catch((error: unknown) => {
       dayCache.delete(dateKey)
       throw error
-    },
-  )
+    })
   dayCache.set(dateKey, request)
   return request
 }
@@ -195,6 +201,27 @@ export function formatLocalISODate(date: Date) {
   const day = String(date.getDate()).padStart(2, "0")
 
   return `${year}-${month}-${day}`
+}
+
+function formatBSPanchangaDate(date: Date) {
+  const bs = adToBS(date)
+  return formatBSDateKey(bs)
+}
+
+function formatBSDateKey(date: BikramSambatDate) {
+  const month = String(date.month).padStart(2, "0")
+  const day = String(date.day).padStart(2, "0")
+
+  return `${date.year}-${month}-${day}`
+}
+
+function normalizeDailyPanchanga(data: DailyPanchangaResponse): DailyPanchanga {
+  if (!data.detail) return data
+
+  return {
+    ...data.detail,
+    festivals: data.detail.festivals ?? data.festivals,
+  }
 }
 
 export function formatFestivalName(festival: PatroFestival) {
