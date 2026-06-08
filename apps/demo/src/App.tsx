@@ -32,7 +32,6 @@ import {
   getHolidaysYear,
   getPatroMonth,
   PATRO_API_DISPLAY_HOST,
-  PATRO_API_URL,
   warmPatroApi,
   type DailyPanchanga,
   type Holiday,
