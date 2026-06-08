@@ -115,11 +115,16 @@ export type NamedElement = {
   name_ne?: string
   end_hours_clock?: string
   end_ghati_clock?: string
+  end_local_time?: string
+  /** Wrapper API shape from /panchanga */
+  end?: string
+  next_ne?: string
   next?: {
     name?: string
     name_ne?: string
     end_hours_clock?: string
     end_ghati_clock?: string
+    end_local_time?: string
   }
 }
 
@@ -198,12 +203,25 @@ export type DailyPanchanga = {
     name_ne?: string
   }
   markers?: PanchangaMarkers
-  planets?: Record<string, { rashi_name_ne?: string; rashi_name?: string; degrees?: number }>
+  planets?: Record<
+    string,
+    { rashi_name_ne?: string; rashi_name?: string; rashi?: number; degrees?: number }
+  >
   festivals?: PatroFestival[]
 }
 
 type DailyPanchangaResponse = DailyPanchanga & {
   detail?: DailyPanchanga
+  /** Wrapper API shape when detail is absent */
+  date_bs?: string
+  date_ad?: string
+  weekday?: string
+  sun?: { sunrise?: string; sunset?: string }
+  moon?: { rise?: string; set?: string }
+  paksha_ne?: string
+  chandra_rashi_ne?: string
+  ritu_ne?: string
+  aayan_ne?: string
 }
 
 const monthCache = new Map<string, Promise<PatroMonth>>()
@@ -297,12 +315,55 @@ function formatBSDateKey(date: BikramSambatDate) {
   return `${date.year}-${month}-${day}`
 }
 
-function normalizeDailyPanchanga(data: DailyPanchangaResponse): DailyPanchanga {
-  if (!data.detail) return data
+function shortClockTime(value?: string) {
+  if (!value) return undefined
+  const match = value.match(/(\d{1,2}:\d{2})/)
+  return match?.[1] ?? value
+}
 
+function normalizeDailyPanchanga(data: DailyPanchangaResponse): DailyPanchanga {
+  if (data.detail) {
+    return {
+      ...data.detail,
+      festivals: data.detail.festivals ?? data.festivals,
+    }
+  }
+
+  const bs = data.bs_date
   return {
-    ...data.detail,
-    festivals: data.detail.festivals ?? data.festivals,
+    date: data.date_ad ?? data.date,
+    display: data.display ?? (bs
+      ? {
+          bs_ne: `वि.सं. ${bs.year}-${String(bs.month).padStart(2, "0")}-${String(bs.day).padStart(2, "0")}`,
+          gregorian_en: data.date_ad,
+        }
+      : undefined),
+    bs_date: data.bs_date,
+    vaara: data.vaara ?? (data.weekday ? { name_ne: data.weekday } : undefined),
+    sunrise: data.sunrise ?? (data.sun?.sunrise ? { local_time_short: data.sun.sunrise } : undefined),
+    sunset: data.sunset ?? (data.sun?.sunset ? { local_time_short: data.sun.sunset } : undefined),
+    moonrise: data.moonrise ?? (data.moon?.rise ? { local_time_short: data.moon.rise } : undefined),
+    moonset: data.moonset ?? (data.moon?.set ? { local_time_short: data.moon.set } : undefined),
+    dinamaan:
+      typeof data.dinamaan === "string"
+        ? { label_en: data.dinamaan }
+        : data.dinamaan,
+    paksha:
+      data.paksha ??
+      (data.paksha_ne ? { label_ne: data.paksha_ne } : undefined),
+    tithi: data.tithi,
+    nakshatra: data.nakshatra,
+    yoga: data.yoga,
+    karana: data.karana,
+    chandra_rashi:
+      data.chandra_rashi ??
+      (data.chandra_rashi_ne ? { name_ne: data.chandra_rashi_ne } : undefined),
+    ritu: data.ritu ?? (data.ritu_ne ? { name_ne: data.ritu_ne } : undefined),
+    aayan: data.aayan ?? (data.aayan_ne ? { name_ne: data.aayan_ne } : undefined),
+    lunar_month: data.lunar_month,
+    planets: data.planets,
+    markers: data.markers,
+    festivals: data.festivals,
   }
 }
 
@@ -336,8 +397,13 @@ export function formatPanchangaElementNe(element?: NamedElement) {
   const name = element.name_ne ?? element.name
   if (!name) return undefined
 
-  const nextName = element.next?.name_ne ?? element.next?.name
-  const endTime = element.end_hours_clock ?? element.end_ghati_clock
+  const nextName =
+    element.next?.name_ne ?? element.next?.name ?? element.next_ne
+  const endTime =
+    shortClockTime(element.end_local_time) ??
+    shortClockTime(element.end) ??
+    shortClockTime(element.end_hours_clock) ??
+    shortClockTime(element.end_ghati_clock)
 
   if (nextName && endTime) return `${name}, ${endTime} बजेपछि ${nextName}`
   if (endTime) return `${name}, ${endTime} सम्म`

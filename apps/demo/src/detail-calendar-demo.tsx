@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import {
   AlertCircle,
   ArrowLeft,
@@ -251,7 +252,7 @@ function DayDetailDialog({
   const display = panchanga?.display ?? monthDay?.panchanga?.display
   const dinVishesh = observances.map((item) => item.text).join(", ")
 
-  return (
+  const dialog = (
     <div className="patro-dialog-overlay" role="presentation" onClick={onClose}>
       <div
         role="dialog"
@@ -297,7 +298,7 @@ function DayDetailDialog({
           </Button>
         </div>
 
-        {loading ? (
+        {loading && !monthDay && !panchanga ? (
           <DayDialogSkeleton />
         ) : error ? (
           <div className="flex gap-2 p-5 text-sm text-destructive">
@@ -352,10 +353,13 @@ function DayDetailDialog({
                   { label: "नक्षत्र", value: formatPanchangaElementNe(panchanga?.nakshatra) },
                   { label: "योग", value: formatPanchangaElementNe(panchanga?.yoga) },
                   { label: "करण", value: formatPanchangaElementNe(panchanga?.karana) },
-                  {
-                    label: "पक्ष",
-                    value: panchanga?.paksha?.label_ne ?? monthDay?.panchanga?.paksha?.label_ne,
-                  },
+                {
+                  label: "पक्ष",
+                  value:
+                    panchanga?.paksha?.label_ne ??
+                    monthDay?.panchanga?.paksha?.label_ne ??
+                    (typeof panchanga?.paksha === "string" ? panchanga.paksha : undefined),
+                },
                 ]}
               />
               <Button
@@ -447,7 +451,10 @@ function DayDetailDialog({
                 },
                 {
                   label: "दिनमान",
-                  value: panchanga?.dinamaan?.label_ne ?? panchanga?.dinamaan?.label_en,
+                  value:
+                    (panchanga?.dinamaan as { label_full_ne?: string } | undefined)?.label_full_ne ??
+                    panchanga?.dinamaan?.label_ne ??
+                    panchanga?.dinamaan?.label_en,
                 },
                 {
                   label: "सूर्योदय",
@@ -478,7 +485,10 @@ function DayDetailDialog({
                     >
                       <div className="font-medium">{name}</div>
                       <div className="text-muted-foreground">
-                        {position.rashi_name_ne ?? position.rashi_name ?? "—"}
+                        {position.rashi_name_ne ??
+                          position.rashi_name ??
+                          (position as { rashi?: number }).rashi ??
+                          "—"}
                       </div>
                     </div>
                   ))}
@@ -490,6 +500,8 @@ function DayDetailDialog({
       </div>
     </div>
   )
+
+  return createPortal(dialog, document.body)
 }
 
 function DetailCalendarCell({
@@ -604,7 +616,10 @@ export function DetailCalendarDemo() {
     [],
   )
 
-  const dialogDate = dialogDay ? bsToAD(bsYear, bsMonth, dialogDay) : null
+  const dialogDate = useMemo(
+    () => (dialogDay ? bsToAD(bsYear, bsMonth, dialogDay) : null),
+    [bsMonth, bsYear, dialogDay],
+  )
   const monthLength = getBSMonthLength(bsYear, bsMonth)
 
   useEffect(() => {
@@ -661,7 +676,7 @@ export function DetailCalendarDemo() {
     return () => {
       cancelled = true
     }
-  }, [dialogDate])
+  }, [bsMonth, bsYear, dialogDay, dialogDate])
 
   const daysByKey = useMemo(() => {
     const map = new Map<string, PatroMonthDay>()
