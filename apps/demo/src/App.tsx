@@ -1146,12 +1146,12 @@ export function DynamicPatro() {
   const visibleBS = useMemo(() => adToBS(visibleMonth), [visibleMonth])
 
   useEffect(() => {
-    fetch("https://patro.onrender.com/health").catch(() => undefined)
+    fetch(\`\${PATRO_API_URL}/health\`).catch(() => undefined)
   }, [])
 
   useEffect(() => {
     fetch(
-      \`https://patro.onrender.com/patro/\${visibleBS.year}/\${visibleBS.month}?panchanga=false\`,
+      \`\${PATRO_API_URL}/patro/\${visibleBS.year}/\${visibleBS.month}?panchanga=false\`,
     )
       .then((response) => response.json())
       .then(setMonthData)
@@ -1190,7 +1190,7 @@ export function HolidaysCalendar() {
   const [visibleMonth, setVisibleMonth] = useState(new Date())
 
   useEffect(() => {
-    fetch("https://patro.onrender.com/holidays/2083")
+    fetch(\`\${PATRO_API_URL}/holidays/2083\`)
       .then((response) => response.json())
       .then((data) => setHolidays(data.holidays))
   }, [])

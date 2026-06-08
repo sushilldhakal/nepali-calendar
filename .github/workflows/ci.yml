@@ -62,6 +62,8 @@ jobs:
         run: npm run build --workspace=apps/demo
         env:
           GITHUB_PAGES: true
+          # Demo-only: Oracle nepali-holiday-api (not npm packages)
+          VITE_PATRO_API_URL: https://84-235-248-118.sslip.io
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
