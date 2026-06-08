@@ -9,6 +9,8 @@ import { nepaliFormatters, nepaliLabels } from "./nepali-formatters"
 export type NepaliCalendarProps = CalendarProps & {
   /** Show small Gregorian day number under each BS day. Default: true */
   showGregorianDates?: boolean
+  /** Show festival indicators on calendar days. Default: false */
+  showFestivals?: boolean
 }
 
 export function NepaliCalendar({
@@ -17,6 +19,7 @@ export function NepaliCalendar({
   formatters,
   labels,
   showGregorianDates = true,
+  showFestivals = false,
   weekStartsOn = 0,
   ...props
 }: NepaliCalendarProps) {
@@ -42,6 +45,7 @@ export function NepaliCalendar({
           <DualDateDayButton
             {...dayButtonProps}
             showGregorianDate={showGregorianDates}
+            showFestivals={showFestivals}
           />
         ),
         ...components,

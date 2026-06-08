@@ -17,4 +17,14 @@ export {
   getBSMonthLength,
   getBSPayPeriodLabel,
   type BikramSambatDate,
+  // Festival exports
+  NEPALI_FESTIVALS,
+  getFestivalsForDate,
+  getFestivalsForMonth,
+  getNationalHolidays,
+  getFestivalsByCategory,
+  isNationalHoliday,
+  getFestivalById,
+  type Festival,
+  type FestivalCategory,
 } from "@sushill/bikram-sambat"

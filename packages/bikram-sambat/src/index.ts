@@ -187,3 +187,50 @@ export function getBSPayPeriodLabel(startDate: string, endDate: string): string 
   const bs = adToBS(midpoint)
   return `${bs.monthName} ${bs.year}`
 }
+
+// Export festival utilities
+export {
+  NEPALI_FESTIVALS,
+  getFestivalsForDate,
+  getFestivalsForBSDate,
+  getFestivalsForMonth,
+  getFestivalsForBSMonth,
+  getNationalHolidays,
+  getFestivalsByCategory,
+  isNationalHoliday,
+  isNationalHolidayBS,
+  getFestivalById,
+  type Festival,
+  type FestivalCategory,
+} from "./festivals"
+
+// Export API festival utilities
+export {
+  fetchFestivalsForMonth,
+  fetchFestivalsForDate,
+  fetchUpcomingFestivals,
+  apiFestivalToFestival,
+  clearFestivalCache,
+  type FestivalApiConfig,
+  type FestivalSummary,
+  type FestivalCalendarResponse,
+} from "./festivals-api"
+
+// Export hybrid festival utilities
+export {
+  getFestivalsForDateHybrid,
+  getFestivalsForMonthHybrid,
+  hasFestivalsOnDate,
+  type FestivalProviderConfig,
+} from "./festivals-hybrid"
+
+// Export holiday data and utilities
+export {
+  holidays,
+  holiday,
+  getHolidaysByYear,
+  getAvailableYears,
+  hasHolidayDataForYear,
+  type HolidayFestival,
+  type HolidayYear,
+} from "./holiday"

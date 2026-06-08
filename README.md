@@ -4,6 +4,15 @@ Open-source **Bikram Sambat** calendar for JavaScript and React. Free to use, MI
 
 **[Live Demo →](https://sushilldhakal.github.io/nepali-calendar/)**
 
+## Features
+
+✅ **Bikram Sambat dates** — Display Nepali calendar dates  
+✅ **Dual calendar display** — BS and AD dates side-by-side  
+✅ **Festival indicators** — Built-in Nepali festivals & holidays  
+✅ **shadcn/ui compatible** — Seamless integration  
+✅ **Zero dependencies** — Core conversion library standalone  
+✅ **TypeScript** — Fully typed  
+
 | Package | npm | Description |
 |---------|-----|-------------|
 | [`bikram-sambat`](./packages/bikram-sambat) | [![npm](https://img.shields.io/npm/v/bikram-sambat)](https://www.npmjs.com/package/bikram-sambat) | AD ↔ BS conversion (zero dependencies) |
@@ -21,6 +30,19 @@ import { NepaliCalendar } from "react-nepali-calendar"
 
 <NepaliCalendar mode="single" selected={date} onSelect={setDate} />
 ```
+
+### With Festivals
+
+```tsx
+<NepaliCalendar 
+  mode="single" 
+  selected={date} 
+  onSelect={setDate}
+  showFestivals={true}
+/>
+```
+
+See **[FESTIVALS.md](./FESTIVALS.md)** for complete festival documentation.
 
 Works with **shadcn/ui** out of the box — the calendar's CSS variables map directly to shadcn's design tokens.
 

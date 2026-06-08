@@ -887,6 +887,40 @@ function HolidaysCalendarDemo() {
     </Card>
   )
 }
+// ─── Calendar: With Festivals ────────────────────────────────────────────────
+
+function CalendarWithFestivals() {
+  const [date, setDate] = useState<Date | undefined>(new Date())
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <NepaliCalendar
+        mode="single"
+        selected={date}
+        onSelect={setDate}
+        showFestivals={true}
+        className="rounded-lg border"
+      />
+      <p className="text-sm text-muted-foreground">
+        {date ? (
+          <>Selected: <span className="font-medium text-foreground">{formatBSDate(date)}</span></>
+        ) : (
+          "No date selected"
+        )}
+      </p>
+      <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-red-500" />
+          <span>National Holiday</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-500" />
+          <span>Festival</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ─── Demo block (preview + code tabs) ───────────────────────────────────────
 
@@ -944,6 +978,7 @@ const NAV = [
   { label: "Calendar" },
   { label: "Dynamic Patro" },
   { label: "Holidays Calendar" },
+  { label: "With Festivals" },
   { label: "Basic" },
   { label: "Date Range" },
   { label: "With Presets" },
@@ -970,13 +1005,13 @@ export function App() {
             <Badge variant="secondary" className="text-xs">Free &amp; Open Source</Badge>
             <Badge variant="outline" className="text-xs">shadcn/ui compatible</Badge>
             <Button variant="ghost" size="sm" asChild className="ml-2">
-              <a href="https://github.com" target="_blank" rel="noreferrer">
+              <a href="https://github.com/sushilldhakal/nepali-calendar" target="_blank" rel="noreferrer">
                 <GitFork className="h-4 w-4" />
                 GitHub
               </a>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <a href="https://npmjs.com" target="_blank" rel="noreferrer">
+              <a href="https://www.npmjs.com/package/@sushill/react-nepali-calendar" target="_blank" rel="noreferrer">
                 <Package className="h-4 w-4" />
                 npm
               </a>
@@ -1186,6 +1221,43 @@ export function HolidaysCalendar() {
         holidaysByMonth={holidaysByMonth}
       />
     </>
+  )
+}`}
+              />
+            </div>
+
+            {/* Calendar with Festivals */}
+            <div id="with-festivals">
+              <DemoBlock
+                title="With Festivals"
+                description="Display Nepali festivals and holidays on the calendar. Red dots indicate national holidays, blue dots show other festivals."
+                preview={<CalendarWithFestivals />}
+                code={`import { useState } from "react"
+import { NepaliCalendar, formatBSDate } from "@sushill/react-nepali-calendar"
+
+export function CalendarWithFestivals() {
+  const [date, setDate] = useState<Date | undefined>(new Date())
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <NepaliCalendar
+        mode="single"
+        selected={date}
+        onSelect={setDate}
+        showFestivals={true}
+        className="rounded-lg border"
+      />
+      <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-red-500" />
+          <span>National Holiday</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-500" />
+          <span>Festival</span>
+        </div>
+      </div>
+    </div>
   )
 }`}
               />
