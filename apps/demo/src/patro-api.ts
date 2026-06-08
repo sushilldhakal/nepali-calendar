@@ -31,12 +31,31 @@ export type PatroFestival =
       type?: string
       category?: string
       importance?: string
+      is_public_holiday?: boolean
     }
+
+export type PatroDayPanchanga = {
+  display?: {
+    bs_ne?: string
+    gregorian_en?: string
+    ns_ne?: string
+  }
+  vaara?: {
+    number?: number
+    name_ne?: string
+    name_english?: string
+  }
+  tithi?: {
+    name_ne?: string
+    name?: string
+  }
+}
 
 export type PatroMonthDay = {
   bs_day: number
   date: string
   festivals?: PatroFestival[]
+  panchanga?: PatroDayPanchanga
 }
 
 export type PatroMonth = {
@@ -167,12 +186,19 @@ export function warmPatroApi() {
   }).catch(() => undefined)
 }
 
-export function getPatroMonth(bsYear: number, bsMonth: number) {
-  const key = `${bsYear}-${bsMonth}`
+export function getPatroMonth(
+  bsYear: number,
+  bsMonth: number,
+  options?: { panchanga?: boolean },
+) {
+  const includePanchanga = options?.panchanga ?? false
+  const key = `${bsYear}-${bsMonth}-${includePanchanga ? "full" : "lite"}`
   const cached = monthCache.get(key)
   if (cached) return cached
 
-  const request = fetchJson<PatroMonth>(`/patro/${bsYear}/${bsMonth}?panchanga=false`).catch(
+  const request = fetchJson<PatroMonth>(
+    `/patro/${bsYear}/${bsMonth}?panchanga=${includePanchanga}`,
+  ).catch(
     (error: unknown) => {
       monthCache.delete(key)
       throw error

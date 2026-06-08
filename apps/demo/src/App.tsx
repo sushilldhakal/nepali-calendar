@@ -38,6 +38,7 @@ import {
   type HolidaysYear,
   type PatroMonth,
 } from "@/patro-api"
+import { DetailCalendarDemo } from "@/detail-calendar-demo"
 
 // ─── Date Picker: Basic ──────────────────────────────────────────────────────
 
@@ -977,6 +978,7 @@ const NAV = [
   { label: "Examples", active: true },
   { label: "Calendar" },
   { label: "Dynamic Patro" },
+  { label: "Detail Calendar" },
   { label: "Holidays Calendar" },
   { label: "With Festivals" },
   { label: "Basic" },
@@ -1171,6 +1173,38 @@ export function DynamicPatro() {
       modifiers={modifiers}
       modifiersClassNames={{ festival: "patro-festival-day" }}
     />
+  )
+}`}
+              />
+            </div>
+
+            {/* Detail Calendar */}
+            <div id="detail-calendar">
+              <DemoBlock
+                title="Detail Calendar"
+                description="A traditional Patro-style monthly grid with Nepali weekdays, tithi, festival labels, Gregorian dates, and BS month/year selectors."
+                preview={<DetailCalendarDemo />}
+                code={`import { useEffect, useMemo, useState } from "react"
+import { getPatroMonth } from "@/patro-api"
+import { bsToAD, getBSMonthLength } from "@sushill/react-nepali-calendar"
+
+export function DetailCalendar() {
+  const [bsYear, setBsYear] = useState(2083)
+  const [bsMonth, setBsMonth] = useState(2)
+  const [monthData, setMonthData] = useState(null)
+
+  useEffect(() => {
+    getPatroMonth(bsYear, bsMonth, { panchanga: true }).then(setMonthData)
+  }, [bsYear, bsMonth])
+
+  const grid = useMemo(() => buildCalendarGrid(bsYear, bsMonth), [bsYear, bsMonth])
+
+  return (
+    <div className="detail-cal-grid">
+      {grid.map((cell) => (
+        <DayCell key={cell.key} cell={cell} day={monthData?.days[cell.bsDay - 1]} />
+      ))}
+    </div>
   )
 }`}
               />

@@ -140,3 +140,38 @@
   background: var(--color-primary) !important;
   color: var(--color-primary-foreground) !important;
 }
+
+/* Detail Calendar demo */
+.detail-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.detail-cal-weekdays {
+  border-bottom: 1px solid color-mix(in oklch, var(--color-border) 80%, transparent);
+}
+
+.detail-cal-day--outside {
+  opacity: 0.38;
+  pointer-events: none;
+  background: color-mix(in oklch, var(--color-muted) 28%, var(--color-background));
+}
+
+.detail-cal-day--selected {
+  background: #f97316;
+  color: #fff;
+  border-color: #ea580c;
+}
+
+.detail-cal-day--selected .text-muted-foreground,
+.detail-cal-day--selected .text-red-600 {
+  color: color-mix(in oklch, #fff 88%, transparent) !important;
+}
+
+.detail-cal-day--today:not(.detail-cal-day--selected) {
+  box-shadow: inset 0 0 0 2px color-mix(in oklch, #f97316 55%, transparent);
+}
+
+.detail-cal-day--saturday:not(.detail-cal-day--selected) .text-2xl {
+  color: var(--color-destructive);
+}
