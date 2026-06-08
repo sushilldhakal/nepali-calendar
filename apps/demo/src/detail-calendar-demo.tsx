@@ -189,7 +189,7 @@ function DetailCalendarCell({
       {primaryEvent ? (
         <span
           className={cn(
-            "line-clamp-2 pr-5 text-[0.62rem] leading-tight",
+            "line-clamp-2 pr-5 text-[0.8rem] leading-tight",
             primaryEvent.isHoliday ? "font-medium text-red-600" : "text-muted-foreground",
           )}
         >
@@ -214,7 +214,7 @@ function DetailCalendarCell({
         {toNepaliDigits(cell.bsDay)}
       </span>
 
-      <div className="mt-auto flex items-end justify-between gap-1 text-[0.62rem] leading-none text-muted-foreground">
+      <div className="mt-0 flex items-end justify-between gap-1 text-[0.8rem] leading-none text-muted-foreground">
         <span className="truncate">{tithi ?? ""}</span>
         <span className="shrink-0 tabular-nums">{cell.date.getDate()}</span>
       </div>
