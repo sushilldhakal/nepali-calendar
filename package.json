@@ -12,6 +12,7 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspace=packages/bikram-sambat",
     "demo": "npm run build --workspace=packages/bikram-sambat --workspace=packages/react-nepali-calendar && npm run dev --workspace=apps/demo",
+    "generate:bs-data": "python3 scripts/generate-bs-calendar-data.py",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "engines": {

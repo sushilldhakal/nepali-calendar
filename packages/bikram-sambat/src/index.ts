@@ -1,3 +1,5 @@
+import calendarData from "./bs-calendar-data.json"
+
 export const BS_MONTH_NAMES = [
   "Baisakh",
   "Jestha",
@@ -35,39 +37,27 @@ type BsMonthLengths = readonly [
   number,
 ]
 
-/** Authoritative month lengths for supported BS years, Baisakh through Chaitra. */
-const BS_YEAR_MONTH_LENGTHS: Record<number, BsMonthLengths> = {
-  2080: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 30],
-  2081: [31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31],
-  2082: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
-  2083: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
-  2084: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31],
-  2085: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31],
-  2086: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
-  2087: [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30],
-  2088: [31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 31],
-  2089: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31],
-  2090: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
+/** Years 2080–2099: official lookup table. 2100–2200: extrapolated (3-year cycle + sankranti). */
+export const BS_SUPPORTED_START_YEAR = calendarData.start_year
+export const BS_SUPPORTED_END_YEAR = calendarData.end_year
+
+function asMonthLengths(lengths: number[]): BsMonthLengths {
+  if (lengths.length !== 12) {
+    throw new Error(`BS month length row must have 12 entries, got ${lengths.length}`)
+  }
+  return lengths as unknown as BsMonthLengths
 }
 
-/** Baisakh 1 AD dates for BS years 2080–2091. */
-const BAISAKH_1_AD: Record<number, string> = {
-  2080: "2023-04-14",
-  2081: "2024-04-13",
-  2082: "2025-04-14",
-  2083: "2026-04-14",
-  2084: "2027-04-14",
-  2085: "2028-04-13",
-  2086: "2029-04-14",
-  2087: "2030-04-14",
-  2088: "2031-04-14",
-  2089: "2032-04-13",
-  2090: "2033-04-14",
-  2091: "2034-04-14",
-}
+const BS_YEAR_MONTH_LENGTHS: Record<number, BsMonthLengths> = Object.fromEntries(
+  Object.entries(calendarData.month_lengths).map(([year, lengths]) => [
+    Number(year),
+    asMonthLengths(lengths),
+  ]),
+)
 
-export const BS_SUPPORTED_START_YEAR = 2080
-export const BS_SUPPORTED_END_YEAR = 2090
+const BAISAKH_1_AD: Record<number, string> = Object.fromEntries(
+  Object.entries(calendarData.baisakh_1_ad).map(([year, iso]) => [Number(year), iso]),
+)
 
 type BsMonthStart = {
   year: number
@@ -113,6 +103,11 @@ function monthStartFor(year: number, month: number): BsMonthStart | undefined {
   return BS_MONTH_STARTS.find((start) => start.year === year && start.month === month)
 }
 
+/** True when `year` has embedded lookup month lengths (offline conversion). */
+export function isBSSupportedYear(year: number): boolean {
+  return year >= BS_SUPPORTED_START_YEAR && year <= BS_SUPPORTED_END_YEAR
+}
+
 export function getBSMonthLength(year: number, month: number): number {
   const monthLength = BS_YEAR_MONTH_LENGTHS[year]?.[month - 1]
   if (monthLength) return monthLength
@@ -145,7 +140,7 @@ export function adToBS(date: Date): BikramSambatDate {
   const adMs = normalizeToUtcDate(date)
   const fallback = BS_MONTH_STARTS[0]
   if (!fallback) {
-    return { year: 2080, month: 1, day: 1, monthName: BS_MONTH_NAMES[0] }
+    return { year: BS_SUPPORTED_START_YEAR, month: 1, day: 1, monthName: BS_MONTH_NAMES[0] }
   }
 
   let match = fallback

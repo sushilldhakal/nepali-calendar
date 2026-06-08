@@ -163,10 +163,9 @@ function DatePickerWithPresets() {
 
 // ─── Date Picker: Date of Birth ──────────────────────────────────────────────
 
-// Supported range: BS 2080–2090 (AD 2023–2033)
-// AD boundaries for the supported BS range
+// Supported range: BS 2080–2200 (offline lookup in bikram-sambat)
 const DOB_FROM_DATE = new Date(2023, 3, 14)  // BS 2080 Baisakh 1
-const DOB_TO_DATE   = new Date(2033, 3, 13)  // BS 2090 Chaitra 30
+const DOB_TO_DATE   = new Date(2144, 3, 15)  // BS 2200 Chaitra last day
 
 function DateOfBirthPicker() {
   const [date, setDate] = useState<Date>()
@@ -766,9 +765,10 @@ function HolidaysCalendarDemo() {
           <div className="flex flex-col gap-1">
             <CardTitle>Holidays Calendar</CardTitle>
             <CardDescription>
-              Highlights every date returned by{" "}
-              <code className="rounded bg-muted px-1">/holidays/{HOLIDAYS_DEFAULT_YEAR}</code> and
-              lists holidays by BS month.
+              National public holidays from{" "}
+              <code className="rounded bg-muted px-1">/holidays/{HOLIDAYS_DEFAULT_YEAR}</code>{" "}
+              (not every festival — use <code className="rounded bg-muted px-1">/festivals/bs/{HOLIDAYS_DEFAULT_YEAR}</code>{" "}
+              for the full observance list).
             </CardDescription>
           </div>
           <Badge variant="outline" className="w-fit">
@@ -817,8 +817,8 @@ function HolidaysCalendarDemo() {
               </div>
             ) : (
               <p className="max-w-md text-xs text-muted-foreground">
-                Muted filled days are holidays. Multi-day festivals like Dashain are highlighted
-                across their full Gregorian date range.
+                Highlighted days are official public holidays only. Multi-day blocks like Dashain
+                and Tihar span their full date range; regional jatras are not included here.
               </p>
             )}
           </div>
@@ -1403,7 +1403,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 
 const FROM_DATE = new Date(2023, 3, 14) // BS 2080 Baisakh 1
-const TO_DATE   = new Date(2033, 3, 13) // BS 2090 Chaitra 30
+const TO_DATE   = new Date(2144, 3, 15) // BS 2200 Chaitra last day
 
 export function DateOfBirthPicker() {
   const [date, setDate] = useState<Date>()

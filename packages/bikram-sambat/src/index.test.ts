@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest"
-import { adToBS, bsToAD, getBSMonthLength } from "./index"
+import {
+  BS_SUPPORTED_END_YEAR,
+  BS_SUPPORTED_START_YEAR,
+  adToBS,
+  bsToAD,
+  getBSMonthLength,
+  isBSSupportedYear,
+} from "./index"
 
 describe("bikram-sambat", () => {
+  it("exposes extended offline range through 2200 BS", () => {
+    expect(BS_SUPPORTED_START_YEAR).toBe(2080)
+    expect(BS_SUPPORTED_END_YEAR).toBe(2200)
+    expect(isBSSupportedYear(2200)).toBe(true)
+    expect(isBSSupportedYear(2201)).toBe(false)
+  })
+
   it("converts Baisakh 1 2082 to known AD date", () => {
     const ad = bsToAD(2082, 1, 1)
     expect(ad.getFullYear()).toBe(2025)
@@ -21,6 +35,23 @@ describe("bikram-sambat", () => {
   it("returns authoritative month lengths for 2082", () => {
     expect(getBSMonthLength(2082, 1)).toBe(31)
     expect(getBSMonthLength(2082, 2)).toBe(31)
-    expect(getBSMonthLength(2082, 3)).toBe(32)
+    expect(getBSMonthLength(2082, 3)).toBe(31)
+    expect(getBSMonthLength(2082, 4)).toBe(32)
+  })
+
+  it("converts far-future BS 2200 Baisakh 1", () => {
+    const ad = bsToAD(2200, 1, 1)
+    expect(ad.getFullYear()).toBe(2143)
+    expect(ad.getMonth()).toBe(3)
+    expect(ad.getDate()).toBe(17)
+  })
+
+  it("round-trips a mid-range future date", () => {
+    const ad = new Date(2050, 8, 20)
+    const bs = adToBS(ad)
+    const back = bsToAD(bs.year, bs.month, bs.day)
+    expect(back.getFullYear()).toBe(ad.getFullYear())
+    expect(back.getMonth()).toBe(ad.getMonth())
+    expect(back.getDate()).toBe(ad.getDate())
   })
 })

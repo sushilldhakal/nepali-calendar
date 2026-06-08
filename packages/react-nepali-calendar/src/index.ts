@@ -9,6 +9,7 @@ export {
   BS_MONTH_NAMES,
   BS_SUPPORTED_END_YEAR,
   BS_SUPPORTED_START_YEAR,
+  isBSSupportedYear,
   adToBS,
   bsToAD,
   formatBSDate,
