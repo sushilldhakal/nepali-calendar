@@ -31,6 +31,7 @@ import {
   getDailyPanchanga,
   getHolidaysYear,
   getPatroMonth,
+  PATRO_API_DISPLAY_HOST,
   PATRO_API_URL,
   warmPatroApi,
   type DailyPanchanga,
@@ -517,7 +518,7 @@ function DynamicPatroDemo() {
             </CardDescription>
           </div>
           <Badge variant="outline" className="w-fit">
-            API: {new URL(PATRO_API_URL).host}
+            API: {PATRO_API_DISPLAY_HOST}
           </Badge>
         </div>
       </CardHeader>
@@ -557,7 +558,7 @@ function DynamicPatroDemo() {
             <div className="flex max-w-md gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
-                {monthError} Render may be waking the service; try the month again in a moment.
+                {monthError} server may be waking the service; try the month again in a moment.
               </span>
             </div>
           ) : (

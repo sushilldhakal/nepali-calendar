@@ -3,9 +3,22 @@ import { adToBS, type BikramSambatDate } from "@sushill/react-nepali-calendar"
 /** Oracle VM API — override with VITE_PATRO_API_URL in .env.local */
 const DEFAULT_PATRO_API_URL = "https://84-235-248-118.sslip.io"
 
-export const PATRO_API_URL =
-  (import.meta.env.VITE_PATRO_API_URL as string | undefined)?.replace(/\/$/, "") ??
-  DEFAULT_PATRO_API_URL
+function resolvePatroApiUrl() {
+  const configured = (import.meta.env.VITE_PATRO_API_URL as string | undefined)?.replace(
+    /\/$/,
+    "",
+  )
+  if (configured) return configured
+  // Dev server proxies API routes — same origin, no CORS preflight.
+  if (import.meta.env.DEV) return ""
+  return DEFAULT_PATRO_API_URL
+}
+
+export const PATRO_API_URL = resolvePatroApiUrl()
+
+export const PATRO_API_DISPLAY_HOST = PATRO_API_URL
+  ? new URL(PATRO_API_URL).host
+  : new URL(DEFAULT_PATRO_API_URL).host
 
 export type PatroFestival =
   | string
