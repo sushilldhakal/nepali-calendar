@@ -175,3 +175,24 @@
 .detail-cal-day--saturday:not(.detail-cal-day--selected) .text-2xl {
   color: var(--color-destructive);
 }
+
+.patro-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in oklch, #000 45%, transparent);
+}
+
+.patro-dialog {
+  width: min(100%, 42rem);
+  max-height: min(90vh, 52rem);
+  overflow-y: auto;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in oklch, var(--color-border) 90%, transparent);
+  background: var(--color-background);
+  box-shadow: 0 24px 48px color-mix(in oklch, #000 18%, transparent);
+}

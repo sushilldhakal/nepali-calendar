@@ -34,6 +34,12 @@ export type PatroFestival =
       is_public_holiday?: boolean
     }
 
+export type PanchangaMarkers = {
+  is_purnima?: boolean
+  is_amavasya?: boolean
+  is_ekadashi?: boolean
+}
+
 export type PatroDayPanchanga = {
   display?: {
     bs_ne?: string
@@ -49,6 +55,10 @@ export type PatroDayPanchanga = {
     name_ne?: string
     name?: string
   }
+  paksha?: {
+    label_ne?: string
+  }
+  markers?: PanchangaMarkers
 }
 
 export type PatroMonthDay = {
@@ -100,7 +110,7 @@ export type HolidaysYear = {
   generated_at: string
 }
 
-type NamedElement = {
+export type NamedElement = {
   name?: string
   name_ne?: string
   end_hours_clock?: string
@@ -111,6 +121,14 @@ type NamedElement = {
     end_hours_clock?: string
     end_ghati_clock?: string
   }
+}
+
+export type DayObservanceKind = "holiday" | "festival" | "shraddha" | "marker"
+
+export type DayObservance = {
+  id: string
+  text: string
+  kind: DayObservanceKind
 }
 
 export type DailyPanchanga = {
@@ -125,6 +143,15 @@ export type DailyPanchanga = {
     month: number
     day: number
     month_name_ne?: string
+  }
+  ns_date?: {
+    year?: number
+    month_name_ne?: string
+    label_ne?: string
+  }
+  vaara?: {
+    name_ne?: string
+    name_english?: string
   }
   sunrise?: {
     local_time_short?: string
@@ -145,6 +172,19 @@ export type DailyPanchanga = {
   paksha?: {
     label_ne?: string
   }
+  lunar_month?: {
+    name?: string
+    full_name?: string
+    is_adhik?: boolean
+  }
+  aayan?: {
+    name_ne?: string
+    name?: string
+  }
+  surya_rashi?: {
+    name_ne?: string
+    name?: string
+  }
   tithi?: NamedElement
   nakshatra?: NamedElement
   yoga?: NamedElement
@@ -157,6 +197,8 @@ export type DailyPanchanga = {
     season?: string
     name_ne?: string
   }
+  markers?: PanchangaMarkers
+  planets?: Record<string, { rashi_name_ne?: string; rashi_name?: string; degrees?: number }>
   festivals?: PatroFestival[]
 }
 
@@ -281,4 +323,73 @@ export function formatFestivalMeta(festival: PatroFestival) {
   if (typeof festival === "string") return undefined
 
   return [festival.category, festival.type, festival.importance].filter(Boolean).join(" · ")
+}
+
+function isPublicHolidayEntry(festival: PatroFestival) {
+  if (typeof festival === "string") return false
+  return festival.is_public_holiday === true || festival.importance === "national"
+}
+
+export function formatPanchangaElementNe(element?: NamedElement) {
+  if (!element) return undefined
+
+  const name = element.name_ne ?? element.name
+  if (!name) return undefined
+
+  const nextName = element.next?.name_ne ?? element.next?.name
+  const endTime = element.end_hours_clock ?? element.end_ghati_clock
+
+  if (nextName && endTime) return `${name}, ${endTime} बजेपछि ${nextName}`
+  if (endTime) return `${name}, ${endTime} सम्म`
+  return name
+}
+
+export function getShraddhaLabel(tithiName?: string) {
+  if (!tithiName) return undefined
+  if (tithiName === "पूर्णिमा" || tithiName === "अमावास्या") return undefined
+  return `${tithiName} श्राद्ध`
+}
+
+export function buildDayObservanceLabels(day?: PatroMonthDay): DayObservance[] {
+  if (!day) return []
+
+  const labels: DayObservance[] = []
+
+  for (const [index, festival] of (day.festivals ?? []).entries()) {
+    const text = formatFestivalName(festival)
+    labels.push({
+      id: typeof festival === "string" ? `festival-${index}` : (festival.id ?? `festival-${index}`),
+      text,
+      kind: isPublicHolidayEntry(festival) ? "holiday" : "festival",
+    })
+  }
+
+  const panchanga = day.panchanga
+  const tithiName = panchanga?.tithi?.name_ne ?? panchanga?.tithi?.name
+  const markers = panchanga?.markers
+
+  if (markers?.is_purnima) {
+    labels.push({ id: "marker-purnima", text: "पूर्णिमा", kind: "marker" })
+  }
+  if (markers?.is_amavasya) {
+    labels.push({ id: "marker-amavasya", text: "अमावास्या", kind: "marker" })
+  }
+  if (markers?.is_ekadashi) {
+    labels.push({ id: "marker-ekadashi", text: "एकादशी", kind: "marker" })
+  }
+
+  const shraddha = getShraddhaLabel(tithiName)
+  if (shraddha && !labels.some((label) => label.text.includes(tithiName ?? ""))) {
+    labels.push({ id: `shraddha-${tithiName}`, text: shraddha, kind: "shraddha" })
+  }
+
+  return labels.sort((left, right) => {
+    const priority: Record<DayObservanceKind, number> = {
+      holiday: 0,
+      festival: 1,
+      marker: 2,
+      shraddha: 3,
+    }
+    return priority[left.kind] - priority[right.kind]
+  })
 }

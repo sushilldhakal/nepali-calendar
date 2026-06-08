@@ -193,6 +193,7 @@ function DateOfBirthPicker() {
         <NepaliCalendar
           mode="single"
           captionLayout="dropdown"
+          reverseYears
           selected={date}
           onSelect={setDate}
           defaultMonth={DOB_FROM_DATE}
@@ -1047,7 +1048,7 @@ export function App() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 px-6 py-10 max-w-5xl">
+        <main className="flex-1 min-w-0 px-6 py-10 max-w-7xl">
           {/* Page title */}
           <div className="space-y-2 mb-8">
             <h1 className="text-3xl font-bold tracking-tight">Nepali Date Picker</h1>
@@ -1182,7 +1183,7 @@ export function DynamicPatro() {
             <div id="detail-calendar">
               <DemoBlock
                 title="Detail Calendar"
-                description="A traditional Patro-style monthly grid with Nepali weekdays, tithi, festival labels, Gregorian dates, and BS month/year selectors."
+                description="A traditional Patro-style monthly grid with tithi, shraddha labels, +N day details, and a full panchanga view via थप जानकारी."
                 preview={<DetailCalendarDemo />}
                 code={`import { useEffect, useMemo, useState } from "react"
 import { getPatroMonth } from "@/patro-api"
@@ -1427,7 +1428,7 @@ export function DatePickerWithPresets() {
             <div id="date-of-birth">
               <DemoBlock
                 title="Date of Birth"
-                description="A date picker for selecting a date of birth in BS. Uses captionLayout='dropdown' for fast month and year navigation."
+                description="A date picker for selecting a date of birth in BS. Uses captionLayout='dropdown' with reverseYears so the year list runs from newest to oldest."
                 preview={<DateOfBirthPicker />}
                 code={`import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
@@ -1463,6 +1464,7 @@ export function DateOfBirthPicker() {
         <NepaliCalendar
           mode="single"
           captionLayout="dropdown"
+          reverseYears
           selected={date}
           onSelect={setDate}
           defaultMonth={FROM_DATE}
