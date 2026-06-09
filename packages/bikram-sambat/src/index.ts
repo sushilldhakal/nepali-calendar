@@ -201,12 +201,28 @@ export {
 
 // Export API festival utilities
 export {
-  fetchFestivalsForMonth,
+  // Primary API functions
+  fetchFestivalsForBSYear,
+  fetchHolidaysForBSYear,
+  fetchSpecialMonths,
   fetchFestivalsForDate,
+  fetchDailyPanchanga,
+  patroFestivalToFestival,
+  clearFestivalCache,
+  // Deprecated — prefer the functions above
+  fetchFestivalsForMonth,
   fetchUpcomingFestivals,
   apiFestivalToFestival,
-  clearFestivalCache,
+  // Types
   type FestivalApiConfig,
+  type PatroFestivalEntry,
+  type PatroFestivalsResponse,
+  type PatroHolidaysResponse,
+  type AdhikMaasInfo,
+  type KshayaMaasInfo,
+  type SpecialMonthsResponse,
+  type PatroPanchangaResponse,
+  // Deprecated types
   type FestivalSummary,
   type FestivalCalendarResponse,
 } from "./festivals-api"
@@ -215,6 +231,7 @@ export {
 export {
   getFestivalsForDateHybrid,
   getFestivalsForMonthHybrid,
+  getSpecialMonths,
   hasFestivalsOnDate,
   type FestivalProviderConfig,
 } from "./festivals-hybrid"
