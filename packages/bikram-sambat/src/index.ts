@@ -207,6 +207,7 @@ export {
   fetchSpecialMonths,
   fetchFestivalsForDate,
   fetchDailyPanchanga,
+  fetchAbout,
   patroFestivalToFestival,
   clearFestivalCache,
   // Deprecated — prefer the functions above
@@ -222,6 +223,8 @@ export {
   type KshayaMaasInfo,
   type SpecialMonthsResponse,
   type PatroPanchangaResponse,
+  type PatroAboutResponse,
+  type PanchangaAngaInfo,
   // Deprecated types
   type FestivalSummary,
   type FestivalCalendarResponse,

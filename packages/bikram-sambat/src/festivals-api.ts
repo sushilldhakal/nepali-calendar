@@ -292,6 +292,52 @@ export async function fetchDailyPanchanga(
   return data
 }
 
+// ---------------------------------------------------------------------------
+// About / methodology
+// ---------------------------------------------------------------------------
+
+/** One anga (limb) of the panchanga as returned by /about */
+export type PanchangaAngaInfo = {
+  name: string
+  name_ne: string
+  division: string | null
+  description: string
+}
+
+/** Full /about response shape */
+export type PatroAboutResponse = {
+  name: string
+  version: string
+  repository: string
+  calculation_engine: {
+    framework: string
+    ephemeris: string
+    ayanamsa: string
+    sunrise_model: string
+    udaya_tithi: string
+  }
+  panchangas: PanchangaAngaInfo[]
+  special_months: Record<string, { description: string; frequency?: string; also_known_as?: string[]; next_known?: string; last_occurrence?: string; next_predicted?: string }>
+  references: { id: number; title: string; url: string }[]
+}
+
+/**
+ * Fetch methodology, references, and version metadata from the Patro server.
+ */
+export async function fetchAbout(
+  config: FestivalApiConfig = {},
+): Promise<PatroAboutResponse | null> {
+  const cfg = { ...DEFAULT_CONFIG, ...config }
+  const key = "patro-about"
+  const hit = getCached<PatroAboutResponse>(key, cfg.cacheDuration)
+  if (hit) return hit
+
+  const url = `${cfg.baseUrl}/about`
+  const data = await fetchJson<PatroAboutResponse>(url, cfg.timeout)
+  if (data) setCached(key, data)
+  return data
+}
+
 /**
  * Fetch festivals for a Gregorian calendar month.
  *
