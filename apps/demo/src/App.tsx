@@ -387,6 +387,44 @@ function PanchangaSidebar({
               />
             </div>
 
+            {panchanga.muhurta && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">मुहूर्त</p>
+                {panchanga.muhurta.rahu_kalam?.start_time && (
+                  <div className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-xs">
+                    <span className="font-medium text-destructive">राहु काल</span>
+                    <span className="text-muted-foreground">
+                      {panchanga.muhurta.rahu_kalam.start_time}–{panchanga.muhurta.rahu_kalam.end_time}
+                    </span>
+                  </div>
+                )}
+                {panchanga.muhurta.yamaganda?.start_time && (
+                  <div className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-xs">
+                    <span className="font-medium text-destructive">यमगण्ड</span>
+                    <span className="text-muted-foreground">
+                      {panchanga.muhurta.yamaganda.start_time}–{panchanga.muhurta.yamaganda.end_time}
+                    </span>
+                  </div>
+                )}
+                {panchanga.muhurta.gulika?.start_time && (
+                  <div className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/5 px-2.5 py-1.5 text-xs">
+                    <span className="font-medium text-destructive">गुलिक काल</span>
+                    <span className="text-muted-foreground">
+                      {panchanga.muhurta.gulika.start_time}–{panchanga.muhurta.gulika.end_time}
+                    </span>
+                  </div>
+                )}
+                {panchanga.muhurta.abhijit?.start_time && (
+                  <div className="flex items-center justify-between rounded-md border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30 px-2.5 py-1.5 text-xs">
+                    <span className="font-medium text-green-700 dark:text-green-400">अभिजित् ✓</span>
+                    <span className="text-muted-foreground">
+                      {panchanga.muhurta.abhijit.start_time}–{panchanga.muhurta.abhijit.end_time}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {festivalItems.some((festival) => formatFestivalMeta(festival)) && (
               <div className="flex flex-col gap-1 text-xs text-muted-foreground">
                 {festivalItems.map((festival, index) => {

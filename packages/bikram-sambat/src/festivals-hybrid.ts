@@ -1,7 +1,8 @@
 /**
  * Hybrid Festival Provider
- * 
- * Tries to fetch from API first, falls back to static data
+ *
+ * Tries to fetch from the Patro server API first; falls back to the local
+ * static dataset if the server is unreachable or returns no data.
  */
 
 import type { Festival } from "./festivals"
@@ -11,133 +12,155 @@ import {
   getFestivalsForBSMonth,
 } from "./festivals"
 import {
-  fetchFestivalsForMonth,
+  fetchFestivalsForBSYear,
   fetchFestivalsForDate,
+  fetchSpecialMonths,
+  patroFestivalToFestival,
   type FestivalApiConfig,
+  type SpecialMonthsResponse,
 } from "./festivals-api"
-import { bsToAD } from "./index"
+import { bsToAD, adToBS } from "./index"
 
 export type FestivalProviderConfig = FestivalApiConfig & {
   useApi?: boolean
   preferApi?: boolean
 }
 
+// ---------------------------------------------------------------------------
+// Per-date lookup
+// ---------------------------------------------------------------------------
+
 /**
- * Get festivals for a BS date with API fallback
+ * Get festivals for a BS date with Patro server API fallback.
+ *
+ * The server is tried first when `useApi && preferApi` (the default). On any
+ * failure it silently falls back to the static dataset.
  */
 export async function getFestivalsForDateHybrid(
   bsYear: number,
   bsMonth: number,
   bsDay: number,
-  config: FestivalProviderConfig = {}
+  config: FestivalProviderConfig = {},
 ): Promise<Festival[]> {
   const { useApi = true, preferApi = true } = config
 
-  // Try API first if enabled and preferred
   if (useApi && preferApi) {
     try {
-      // Convert BS to AD for API call
       const adDate = bsToAD(bsYear, bsMonth, bsDay)
       const dateStr = adDate.toISOString().split("T")[0]
-
-      const apiFestivals = await fetchFestivalsForDate(dateStr, config)
-
-      if (apiFestivals && apiFestivals.length > 0) {
-        // Convert API response to our Festival type
-        return apiFestivals.map((f) => ({
-          id: f.id,
-          name: f.name,
-          nameNepali: f.name_nepali || f.name,
-          description: f.description || "",
-          category: (f.category as any) || "cultural",
-          isNationalHoliday: f.is_national_holiday || false,
-          significance: (f.significance_level || 3) as any,
-          startDate: f.start_date,
-          endDate: f.end_date || f.start_date,
-          durationDays: 1,
-          year: bsYear,
-        }))
-      }
-    } catch (error) {
-      console.warn("API fetch failed, falling back to static data:", error)
+      const entries = await fetchFestivalsForDate(dateStr, config)
+      if (entries.length > 0) return entries.map(patroFestivalToFestival)
+    } catch (err) {
+      console.warn("[patro] date fetch failed, using static data:", err)
     }
   }
 
-  // Fall back to static data
   return getFestivalsForBSDate(bsYear, bsMonth, bsDay)
 }
 
+// ---------------------------------------------------------------------------
+// Per-month lookup
+// ---------------------------------------------------------------------------
+
 /**
- * Get festivals for a BS month with API fallback
+ * Get festivals for a BS month with Patro server API fallback.
+ *
+ * Fetches the full BS-year payload and filters to the requested month,
+ * which means subsequent calls in the same year are served from cache.
  */
 export async function getFestivalsForMonthHybrid(
   bsYear: number,
   bsMonth: number,
-  config: FestivalProviderConfig = {}
+  config: FestivalProviderConfig = {},
 ): Promise<Festival[]> {
   const { useApi = true, preferApi = true } = config
 
-  // Try API first if enabled and preferred
   if (useApi && preferApi) {
     try {
-      // Get the first day of the BS month to determine the Gregorian year/month
-      const firstDay = bsToAD(bsYear, bsMonth, 1)
-      const year = firstDay.getFullYear()
-      const month = firstDay.getMonth() + 1
+      const payload = await fetchFestivalsForBSYear(bsYear, config)
+      if (payload && payload.festivals.length > 0) {
+        // Filter to festivals that overlap this BS month
+        const monthStart = bsToAD(bsYear, bsMonth, 1)
+        const lastDay = getLastDayOfBSMonth(bsYear, bsMonth)
+        const monthEnd = bsToAD(bsYear, bsMonth, lastDay)
 
-      const apiResponse = await fetchFestivalsForMonth(year, month, config)
-
-      if (apiResponse && apiResponse.days) {
-        // Extract all unique festivals from the month
-        const festivalMap = new Map<string, Festival>()
-
-        apiResponse.days.forEach((day) => {
-          day.festivals.forEach((f) => {
-            if (!festivalMap.has(f.id)) {
-              festivalMap.set(f.id, {
-                id: f.id,
-                name: f.name,
-                nameNepali: f.name_nepali || f.name,
-                description: f.description || "",
-                category: (f.category as any) || "cultural",
-                isNationalHoliday: f.is_national_holiday || false,
-                significance: (f.significance_level || 3) as any,
-                startDate: f.start_date || day.date,
-                endDate: f.end_date || day.date,
-                durationDays: 1,
-                year: bsYear,
-              })
-            }
-          })
+        const filtered = payload.festivals.filter((f) => {
+          const start = new Date(f.start_date)
+          const end = new Date(f.end_date)
+          return start <= monthEnd && end >= monthStart
         })
 
-        if (festivalMap.size > 0) {
-          return Array.from(festivalMap.values())
-        }
+        if (filtered.length > 0) return filtered.map(patroFestivalToFestival)
       }
-    } catch (error) {
-      console.warn("API fetch failed, falling back to static data:", error)
+    } catch (err) {
+      console.warn("[patro] month fetch failed, using static data:", err)
     }
   }
 
-  // Fall back to static data
   return getFestivalsForBSMonth(bsMonth)
 }
 
+// ---------------------------------------------------------------------------
+// Special months (Adhik Maas / Kshaya Maas)
+// ---------------------------------------------------------------------------
+
 /**
- * Check if a date has festivals (with API support)
+ * Fetch Adhik Maas and Kshaya Maas metadata for a BS year.
+ *
+ * Returns null if the server is unreachable. The `adhik_maas.has_adhik_maas`
+ * flag tells you whether an extra intercalary month (Mala Maas) occurs this
+ * year, which causes festival dates to shift by one lunar month.
+ *
+ * @example
+ * const info = await getSpecialMonths(2082)
+ * if (info?.adhik_maas.has_adhik_maas) {
+ *   const m = info.adhik_maas
+ *   console.log(`Adhik ${m.month_name}: ${m.start_date} – ${m.end_date}`)
+ * }
+ */
+export async function getSpecialMonths(
+  bsYear: number,
+  config: FestivalApiConfig = {},
+): Promise<SpecialMonthsResponse | null> {
+  return fetchSpecialMonths(bsYear, config)
+}
+
+// ---------------------------------------------------------------------------
+// Boolean helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Check whether any festivals are active on a given BS date.
  */
 export async function hasFestivalsOnDate(
   bsYear: number,
   bsMonth: number,
   bsDay: number,
-  config: FestivalProviderConfig = {}
+  config: FestivalProviderConfig = {},
 ): Promise<boolean> {
   const festivals = await getFestivalsForDateHybrid(bsYear, bsMonth, bsDay, config)
   return festivals.length > 0
 }
 
-/**
- * Get static festivals (synchronous, always available)
- */
+// ---------------------------------------------------------------------------
+// Re-exports
+// ---------------------------------------------------------------------------
+
 export { NEPALI_FESTIVALS, getFestivalsForBSDate, getFestivalsForBSMonth }
+
+// ---------------------------------------------------------------------------
+// Internal helper
+// ---------------------------------------------------------------------------
+
+function getLastDayOfBSMonth(bsYear: number, bsMonth: number): number {
+  try {
+    // bsToAD the 1st of the NEXT month, then subtract 1 day
+    const nextMonth = bsMonth === 12 ? 1 : bsMonth + 1
+    const nextYear = bsMonth === 12 ? bsYear + 1 : bsYear
+    const nextMonthStart = bsToAD(nextYear, nextMonth, 1)
+    nextMonthStart.setDate(nextMonthStart.getDate() - 1)
+    return adToBS(nextMonthStart).day
+  } catch {
+    return 30 // safe fallback
+  }
+}

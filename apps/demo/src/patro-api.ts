@@ -205,8 +205,42 @@ export type DailyPanchanga = {
   markers?: PanchangaMarkers
   planets?: Record<
     string,
-    { rashi_name_ne?: string; rashi_name?: string; rashi?: number; degrees?: number }
+    { rashi_name_ne?: string; rashi_name?: string; rashi?: number; degrees?: number; speed?: number; is_retrograde?: boolean }
   >
+  muhurta?: {
+    hora_duration_minutes?: number
+    muhurta_duration_minutes?: number
+    rahu_kalam?: {
+      lord?: string
+      period_no?: number
+      start_time?: string
+      end_time?: string
+      is_auspicious?: boolean
+    }
+    yamaganda?: {
+      lord?: string
+      period_no?: number
+      start_time?: string
+      end_time?: string
+      is_auspicious?: boolean
+    }
+    gulika?: {
+      lord?: string
+      period_no?: number
+      start_time?: string
+      end_time?: string
+      is_auspicious?: boolean
+    }
+    abhijit?: {
+      name?: string
+      muhurta_no?: number
+      start_time?: string
+      end_time?: string
+      solar_noon?: string
+      duration_minutes?: number
+      is_auspicious?: boolean
+    }
+  }
   festivals?: PatroFestival[]
 }
 
@@ -222,6 +256,7 @@ type DailyPanchangaResponse = DailyPanchanga & {
   chandra_rashi_ne?: string
   ritu_ne?: string
   aayan_ne?: string
+  muhurta?: DailyPanchanga["muhurta"]
 }
 
 const monthCache = new Map<string, Promise<PatroMonth>>()
@@ -362,6 +397,7 @@ function normalizeDailyPanchanga(data: DailyPanchangaResponse): DailyPanchanga {
     aayan: data.aayan ?? (data.aayan_ne ? { name_ne: data.aayan_ne } : undefined),
     lunar_month: data.lunar_month,
     planets: data.planets,
+    muhurta: data.muhurta,
     markers: data.markers,
     festivals: data.festivals,
   }

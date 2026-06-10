@@ -474,6 +474,47 @@ function DayDetailDialog({
               </section>
             ) : null}
 
+            {panchanga?.muhurta ? (
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold">मुहूर्त</h3>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {panchanga.muhurta.rahu_kalam?.start_time ? (
+                    <div className="rounded-md border bg-destructive/5 px-3 py-2 text-xs">
+                      <div className="font-medium text-destructive">राहु काल</div>
+                      <div className="text-muted-foreground">
+                        {panchanga.muhurta.rahu_kalam.start_time} – {panchanga.muhurta.rahu_kalam.end_time}
+                      </div>
+                    </div>
+                  ) : null}
+                  {panchanga.muhurta.yamaganda?.start_time ? (
+                    <div className="rounded-md border bg-destructive/5 px-3 py-2 text-xs">
+                      <div className="font-medium text-destructive">यमगण्ड</div>
+                      <div className="text-muted-foreground">
+                        {panchanga.muhurta.yamaganda.start_time} – {panchanga.muhurta.yamaganda.end_time}
+                      </div>
+                    </div>
+                  ) : null}
+                  {panchanga.muhurta.gulika?.start_time ? (
+                    <div className="rounded-md border bg-destructive/5 px-3 py-2 text-xs">
+                      <div className="font-medium text-destructive">गुलिक काल</div>
+                      <div className="text-muted-foreground">
+                        {panchanga.muhurta.gulika.start_time} – {panchanga.muhurta.gulika.end_time}
+                      </div>
+                    </div>
+                  ) : null}
+                  {panchanga.muhurta.abhijit?.start_time ? (
+                    <div className="rounded-md border bg-green-50 dark:bg-green-950/30 px-3 py-2 text-xs">
+                      <div className="font-medium text-green-700 dark:text-green-400">अभिजित् मुहूर्त ✓</div>
+                      <div className="text-muted-foreground">
+                        {panchanga.muhurta.abhijit.start_time} – {panchanga.muhurta.abhijit.end_time}
+                        {panchanga.muhurta.abhijit.solar_noon ? ` (मध्यान्ह ${panchanga.muhurta.abhijit.solar_noon})` : ""}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+
             {panchanga?.planets && Object.keys(panchanga.planets).length > 0 ? (
               <section className="space-y-2">
                 <h3 className="text-sm font-semibold">सूर्योदयकालीन ग्रह</h3>
@@ -483,13 +524,16 @@ function DayDetailDialog({
                       key={name}
                       className="rounded-md border bg-background px-2 py-2 text-center text-xs"
                     >
-                      <div className="font-medium">{name}</div>
+                      <div className="font-medium capitalize">{name}</div>
                       <div className="text-muted-foreground">
                         {position.rashi_name_ne ??
                           position.rashi_name ??
                           (position as { rashi?: number }).rashi ??
                           "—"}
                       </div>
+                      {position.is_retrograde ? (
+                        <div className="text-[0.6rem] text-orange-500">वक्री</div>
+                      ) : null}
                     </div>
                   ))}
                 </div>
