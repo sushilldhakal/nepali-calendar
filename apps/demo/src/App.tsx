@@ -164,12 +164,22 @@ function DatePickerWithPresets() {
 
 // ─── Date Picker: Date of Birth ──────────────────────────────────────────────
 
-// Supported range: BS 1700–2200 (offline lookup in bikram-sambat)
-const DOB_FROM_DATE = new Date(2023, 3, 14)  // BS 2080 Baisakh 1
-const DOB_TO_DATE   = new Date(2144, 3, 15)  // BS 2200 Chaitra last day
+const DOB_MIN_DATE = bsToAD(1700, 1, 1) // BS 1700 Baisakh 1 — earliest offline year
+
+function getDobMaxDate() {
+  const today = new Date()
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate())
+}
+
+function getDobDefaultMonth() {
+  const d = getDobMaxDate()
+  d.setFullYear(d.getFullYear() - 30)
+  return d
+}
 
 function DateOfBirthPicker() {
   const [date, setDate] = useState<Date>()
+  const dobMaxDate = getDobMaxDate()
 
   const bs = date ? adToBS(date) : null
 
@@ -196,10 +206,10 @@ function DateOfBirthPicker() {
           reverseYears
           selected={date}
           onSelect={setDate}
-          defaultMonth={DOB_FROM_DATE}
-          startMonth={DOB_FROM_DATE}
-          endMonth={DOB_TO_DATE}
-          disabled={(d) => d < DOB_FROM_DATE || d > DOB_TO_DATE}
+          defaultMonth={getDobDefaultMonth()}
+          startMonth={DOB_MIN_DATE}
+          endMonth={dobMaxDate}
+          disabled={(d) => d < DOB_MIN_DATE || d > dobMaxDate}
           initialFocus
         />
         {bs && (
@@ -1466,20 +1476,25 @@ export function DatePickerWithPresets() {
             <div id="date-of-birth">
               <DemoBlock
                 title="Date of Birth"
-                description="A date picker for selecting a date of birth in BS. Uses captionLayout='dropdown' with reverseYears so the year list runs from newest to oldest."
+                description="A date picker for selecting a date of birth in BS. Range is BS 1700 through today; reverseYears lists recent birth years first."
                 preview={<DateOfBirthPicker />}
                 code={`import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
-import { NepaliCalendar, adToBS } from "@sushill/react-nepali-calendar"
+import { NepaliCalendar, adToBS, bsToAD } from "@sushill/react-nepali-calendar"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-const FROM_DATE = new Date(2023, 3, 14) // BS 2080 Baisakh 1
-const TO_DATE   = new Date(2144, 3, 15) // BS 2200 Chaitra last day
+const MIN_DATE = bsToAD(1700, 1, 1) // BS 1700 Baisakh 1
+
+function maxDobDate() {
+  const today = new Date()
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate())
+}
 
 export function DateOfBirthPicker() {
   const [date, setDate] = useState<Date>()
+  const maxDate = maxDobDate()
   const bs = date ? adToBS(date) : null
 
   return (
@@ -1505,10 +1520,9 @@ export function DateOfBirthPicker() {
           reverseYears
           selected={date}
           onSelect={setDate}
-          defaultMonth={FROM_DATE}
-          startMonth={FROM_DATE}
-          endMonth={TO_DATE}
-          disabled={(d) => d < FROM_DATE || d > TO_DATE}
+          startMonth={MIN_DATE}
+          endMonth={maxDate}
+          disabled={(d) => d < MIN_DATE || d > maxDate}
           initialFocus
         />
       </PopoverContent>
