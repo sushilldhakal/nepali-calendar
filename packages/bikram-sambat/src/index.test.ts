@@ -9,11 +9,20 @@ import {
 } from "./index"
 
 describe("bikram-sambat", () => {
-  it("exposes extended offline range through 2200 BS", () => {
-    expect(BS_SUPPORTED_START_YEAR).toBe(2080)
+  it("exposes offline range from 1700 through 2200 BS", () => {
+    expect(BS_SUPPORTED_START_YEAR).toBe(1700)
     expect(BS_SUPPORTED_END_YEAR).toBe(2200)
+    expect(isBSSupportedYear(1700)).toBe(true)
     expect(isBSSupportedYear(2200)).toBe(true)
+    expect(isBSSupportedYear(1699)).toBe(false)
     expect(isBSSupportedYear(2201)).toBe(false)
+  })
+
+  it("converts historical BS 1700 Baisakh 1", () => {
+    const ad = bsToAD(1700, 1, 1)
+    expect(ad.getFullYear()).toBe(1643)
+    expect(ad.getMonth()).toBe(3) // April (0-indexed)
+    expect(ad.getDate()).toBe(9)
   })
 
   it("converts Baisakh 1 2082 to known AD date", () => {

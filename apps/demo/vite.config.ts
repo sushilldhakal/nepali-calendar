@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 
 const PATRO_API_TARGET =
-  process.env.VITE_PATRO_API_URL ?? "https://84-235-248-118.sslip.io"
+  process.env.VITE_PATRO_API_URL ?? "https://193-123-67-133.sslip.io"
 
 export default defineConfig({
   // GitHub Pages serves from /nepali-calendar/ when deployed to

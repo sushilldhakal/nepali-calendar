@@ -37,7 +37,7 @@ type BsMonthLengths = readonly [
   number,
 ]
 
-/** Years 2080–2099: official lookup table. 2100–2200: extrapolated (3-year cycle + sankranti). */
+/** BS 1700–2200 offline tables. 2000–2099 official lookup; 1700–1999 & 2100–2200 sankranti estimated. */
 export const BS_SUPPORTED_START_YEAR = calendarData.start_year
 export const BS_SUPPORTED_END_YEAR = calendarData.end_year
 

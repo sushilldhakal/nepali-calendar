@@ -164,7 +164,7 @@ function DatePickerWithPresets() {
 
 // ─── Date Picker: Date of Birth ──────────────────────────────────────────────
 
-// Supported range: BS 2080–2200 (offline lookup in bikram-sambat)
+// Supported range: BS 1700–2200 (offline lookup in bikram-sambat)
 const DOB_FROM_DATE = new Date(2023, 3, 14)  // BS 2080 Baisakh 1
 const DOB_TO_DATE   = new Date(2144, 3, 15)  // BS 2200 Chaitra last day
 

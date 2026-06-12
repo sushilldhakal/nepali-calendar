@@ -18,29 +18,9 @@ export function DualDateDayButton({
   const bs = adToBS(day.date)
   const gregorianDay = day.date.getDate()
   
-  // Check for festivals on this date
   const festivals = showFestivals ? getFestivalsForDate(day.date) : []
   const hasFestival = festivals.length > 0
   const isHoliday = festivals.some(f => f.isNationalHoliday)
-  
-  // Debug logging for first render
-  if (typeof window !== 'undefined' && !(window as any).__festivalDebugLogged) {
-    const dateStr = day.date.toISOString().split('T')[0]
-    if (dateStr === '2026-11-09' || dateStr === '2026-04-14') {
-      console.log(`🔍 ${dateStr} (BS ${bs.monthName} ${bs.day}):`, {
-        showFestivals,
-        festivals: festivals.map(f => f.name),
-        hasFestival,
-        isHoliday
-      })
-    }
-  }
-  
-  // Debug logging - remove after testing
-  if (showFestivals && hasFestival) {
-    console.log(`📅 ${day.date.toISOString().split('T')[0]} (BS ${bs.year}/${bs.month}/${bs.day}):`, 
-      festivals.map(f => `${f.name}${f.isNationalHoliday ? '🔴' : '🔵'}`).join(', '))
-  }
 
   return (
     <button type="button" {...buttonProps}>

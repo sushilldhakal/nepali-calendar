@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Generate offline BS calendar tables for @sushill/bikram-sambat (2080–2200).
+"""Generate offline BS calendar tables for @sushill/bikram-sambat (1700–2200).
 
-Uses the nepali-holiday-api engine (aligned with Project Parva):
-- 2080–2099: official month-length lookup
-- 2100–2114: calibrated 3-year cycle extrapolation
-- 2115–2200: sankranti-based estimation
+Uses the nepali-holiday-api engine:
+- 2000–2099: official month-length lookup
+- 1700–1999, 2100–2200: sankranti-based estimation
 
 Run from repo root:
   python3 scripts/generate-bs-calendar-data.py
@@ -20,7 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 API_ROOT = REPO_ROOT.parent / "nepali-holiday-api"
 OUT_PATH = REPO_ROOT / "packages" / "bikram-sambat" / "src" / "bs-calendar-data.json"
 
-START_YEAR = 2080
+START_YEAR = 1700
 END_YEAR = 2200
 
 
@@ -34,14 +33,19 @@ def main() -> None:
     for year in range(START_YEAR, END_YEAR + 1):
         month_lengths[str(year)] = [get_bs_month_length(year, m) for m in range(1, 13)]
         baisakh_1_ad[str(year)] = get_bs_month_start(year, 1).isoformat()
+        if year % 50 == 0:
+            print(f"  {year}...", flush=True)
 
     baisakh_1_ad[str(END_YEAR + 1)] = get_bs_month_start(END_YEAR + 1, 1).isoformat()
 
     payload = {
         "start_year": START_YEAR,
         "end_year": END_YEAR,
-        "source": "nepali-holiday-api/panchanga (Project Parva compatible)",
-        "notes": "2099 and earlier: official lookup; 2100+ extrapolated",
+        "source": "nepali-holiday-api/panchanga",
+        "notes": (
+            f"{START_YEAR}-1999, 2100-{END_YEAR}: sankranti estimated; "
+            "2000-2099: official lookup"
+        ),
         "month_lengths": month_lengths,
         "baisakh_1_ad": baisakh_1_ad,
     }

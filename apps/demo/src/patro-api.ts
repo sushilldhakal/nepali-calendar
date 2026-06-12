@@ -1,7 +1,7 @@
 import { adToBS, type BikramSambatDate } from "@sushill/react-nepali-calendar"
 
 /** Oracle VM API — override with VITE_PATRO_API_URL in .env.local */
-const DEFAULT_PATRO_API_URL = "https://84-235-248-118.sslip.io"
+const DEFAULT_PATRO_API_URL = "https://193-123-67-133.sslip.io"
 
 function resolvePatroApiUrl() {
   const configured = (import.meta.env.VITE_PATRO_API_URL as string | undefined)?.replace(
